@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -47,7 +48,9 @@ export default function BakeryLogisticsDashboard({
   const [logs, setLogs] = React.useState<StockLog[]>(initialLogs)
   const [selectedItemId, setSelectedItemId] = React.useState(inventoryItems[0]?.id || "")
   const [quantity, setQuantity] = React.useState("")
+  const [price, setPrice] = React.useState("")
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const router = useRouter()
   const [successMsg, setSuccessMsg] = React.useState<string | null>(null)
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null)
   const [timeFilter, setTimeFilter] = React.useState<"all" | "last_week" | "last_month" | "custom_date">("all")
@@ -100,8 +103,13 @@ export default function BakeryLogisticsDashboard({
     if (!selectedItemId || !quantity) return
 
     const parsedQty = parseFloat(quantity)
+    const parsedPrice = parseFloat(price)
     if (isNaN(parsedQty) || parsedQty <= 0) {
       setErrorMsg("Please enter a valid positive quantity number.")
+      return
+    }
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      setErrorMsg("Please enter a valid positive price.")
       return
     }
 
@@ -142,6 +150,20 @@ export default function BakeryLogisticsDashboard({
       const selectedItem = inventoryItems.find(i => i.id === selectedItemId)
       if (!selectedItem) throw new Error("Selected item not found.")
 
+      // 3. Insert into shipments table
+      const { error: shipmentError } = await clientSupabase
+        .from("shipments")
+        .insert({
+          id: crypto.randomUUID(),
+          item_id: selectedItemId,
+          item_name: selectedItem.name,
+          quantity: parsedQty,
+          price: parsedPrice,
+          department: "Bakery"
+        })
+
+      if (shipmentError) throw new Error(`Shipment Error: ${shipmentError.message}`)
+
       const updatedStock = parseFloat((selectedItem.current_stock + parsedQty).toFixed(2))
 
       // 3. Update stock quantity in inventory_items
@@ -159,7 +181,10 @@ export default function BakeryLogisticsDashboard({
       }
 
       setQuantity("")
+      setPrice("")
       setSuccessMsg(`Registered shipment of ${parsedQty} ${selectedItem.unit} of ${selectedItem.name} successfully.`)
+      
+      router.refresh()
     } catch (err: any) {
       console.error("Error registering shipment:", err)
       setErrorMsg(err.message || "Failed to log incoming shipment.")
@@ -218,6 +243,26 @@ export default function BakeryLogisticsDashboard({
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground pointer-events-none select-none">
                   {inventoryItems.find(i => i.id === selectedItemId)?.unit || ""}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1.5 shrink-0">
+              <Label htmlFor="price">Price (LKR)</Label>
+              <div className="relative">
+                <Input
+                  id="price"
+                  type="number"
+                  step="any"
+                  placeholder="e.g. 5000"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  disabled={isSubmitting}
+                  className="pr-16 h-11 rounded-xl border-input/50 bg-background/80 hover:bg-background focus:bg-background transition-all focus-visible:ring-2 focus-visible:ring-primary/40"
+                  required
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground pointer-events-none select-none">
+                  LKR
                 </div>
               </div>
             </div>

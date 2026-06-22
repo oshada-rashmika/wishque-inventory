@@ -60,9 +60,8 @@ export default function Navbar({ profile }: NavbarProps) {
 
   const deptStyles = getDepartmentStyles(profile.department)
   const normalizedDept = profile.department.trim().toLowerCase()
-  const showProductsLink = normalizedDept === "bakery" || normalizedDept === "floral"
-  const isBakeryAsstManager = normalizedDept === "bakery" && profile.role.includes("Assistant Manager")
-  const dashboardPath = `/dashboard/${profile.department.toLowerCase().replace(/\s+/g, "-")}`
+  const isAssistantManager = profile.role.includes("Assistant Manager")
+  const dashboardPath = `/dashboard/${normalizedDept.replace(/\s+/g, "-")}`
   
   const isActiveDashboard = pathname === dashboardPath
   const isActiveProducts = pathname === "/dashboard/products"
@@ -75,62 +74,57 @@ export default function Navbar({ profile }: NavbarProps) {
         <div className="flex items-center gap-4 sm:gap-6">
           <Link 
             href={dashboardPath}
-            className="flex items-center gap-3 transition-opacity hover:opacity-90 active:scale-98"
+            className="transition-opacity hover:opacity-80 active:scale-95"
           >
-            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg overflow-hidden border border-border/50 bg-muted">
+            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl overflow-hidden bg-background shadow-xs border border-border/40">
               <Image
                 src="/logo.png"
                 alt="Wishque IMS Logo"
-                width={36}
-                height={36}
-                className="object-contain"
+                width={44}
+                height={44}
+                className="object-contain drop-shadow-sm"
                 priority
               />
             </div>
-            <span className="font-bold text-base sm:text-lg tracking-tight bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent select-none font-sans">
-              Wishque IMS
-            </span>
           </Link>
 
-          {showProductsLink && (
-            <nav className="flex items-center gap-1 border-l border-border/30 pl-4 ml-1">
-              <Link
-                href={dashboardPath}
-                className={cn(
-                  "px-2.5 py-1 text-xs font-semibold rounded-md transition-colors",
-                  isActiveDashboard 
-                    ? "bg-secondary text-foreground" 
-                    : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
-                )}
-              >
-                Dashboard
-              </Link>
-              {isBakeryAsstManager && (
-                <Link
-                  href={`${dashboardPath}/inventory`}
-                  className={cn(
-                    "px-2.5 py-1 text-xs font-semibold rounded-md transition-colors",
-                    isActiveInventory 
-                      ? "bg-secondary text-foreground" 
-                      : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
-                  )}
-                >
-                  Current Inventory
-                </Link>
+          <nav className="flex items-center gap-1.5 border-l border-border/30 pl-5 ml-1">
+            <Link
+              href={dashboardPath}
+              className={cn(
+                "px-3 py-1.5 text-[13px] font-bold rounded-lg transition-all",
+                isActiveDashboard 
+                  ? "bg-primary/10 text-primary shadow-xs" 
+                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
               )}
+            >
+              Dashboard
+            </Link>
+            {isAssistantManager && (
               <Link
-                href="/dashboard/products"
+                href={`${dashboardPath}/inventory`}
                 className={cn(
-                  "px-2.5 py-1 text-xs font-semibold rounded-md transition-colors",
-                  isActiveProducts 
-                    ? "bg-secondary text-foreground" 
-                    : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+                  "px-3 py-1.5 text-[13px] font-bold rounded-lg transition-all",
+                  isActiveInventory 
+                    ? "bg-primary/10 text-primary shadow-xs" 
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                 )}
               >
-                Products
+                Current Inventory
               </Link>
-            </nav>
-          )}
+            )}
+            <Link
+              href="/dashboard/products"
+              className={cn(
+                "px-3 py-1.5 text-[13px] font-bold rounded-lg transition-all",
+                isActiveProducts 
+                  ? "bg-primary/10 text-primary shadow-xs" 
+                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+              )}
+            >
+              Products
+            </Link>
+          </nav>
         </div>
 
         {/* User Details & Actions Section */}
@@ -170,14 +164,14 @@ export default function Navbar({ profile }: NavbarProps) {
 
           {/* Log Out Button */}
           <Button
-            variant="destructive"
+            variant="ghost"
             size="sm"
             onClick={handleSignOut}
             disabled={isLoggingOut}
-            className="gap-1.5 cursor-pointer text-xs h-8 px-2.5 sm:px-3"
+            className="gap-2 cursor-pointer text-xs h-9 px-3 rounded-xl hover:bg-destructive/10 hover:text-destructive transition-colors text-muted-foreground"
           >
-            <LogOut className="h-3.5 w-3.5" />
-            <span className="hidden xs:inline">
+            <LogOut className="h-4 w-4" />
+            <span className="hidden xs:inline font-bold">
               {isLoggingOut ? "Logging out..." : "Log Out"}
             </span>
             <span className="xs:hidden">

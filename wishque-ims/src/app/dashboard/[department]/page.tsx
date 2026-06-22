@@ -1,8 +1,11 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { AlertTriangle } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { AlertTriangle, DollarSign, Calculator } from "lucide-react"
 import BakeryIngredientList from "@/components/BakeryIngredientList"
 import BakeryLogisticsDashboard from "@/components/BakeryLogisticsDashboard"
 
@@ -115,6 +118,21 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
 
   if (normalizedDept !== departmentParam) {
     redirect(`/dashboard/${normalizedDept}`)
+  }
+
+  let consumptionCost = 0
+  if (profile.role.includes("Assistant Manager") && ["Bakery", "Floral", "Stores", "Stationery"].includes(profile.department)) {
+    const now = new Date()
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    const { data: shipments } = await supabase
+      .from("shipments")
+      .select("price")
+      .eq("department", profile.department)
+      .gte("created_at", firstDayOfMonth)
+      
+    if (shipments && shipments.length > 0) {
+      consumptionCost = shipments.reduce((sum, s) => sum + Number(s.price || 0), 0)
+    }
   }
 
   // Fetch logistics data server-side if user is Bakery Assistant Manager
@@ -232,6 +250,33 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
             </Card>
           )}
         </div>
+      )}
+
+      {profile.role.includes("Assistant Manager") && ["Bakery", "Floral", "Stores", "Stationery"].includes(profile.department) && (
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50 backdrop-blur-xl rounded-3xl overflow-hidden mt-6 relative">
+          <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+            <DollarSign className="w-32 h-32" />
+          </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-extrabold flex items-center gap-2.5">
+               <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
+                 <Calculator className="h-5 w-5" />
+               </div>
+               Estimated Department Consumption Cost
+            </CardTitle>
+            <CardDescription className="text-sm mt-1.5 opacity-80">
+               Aggregated current-month spending value for raw materials.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-2 pb-6">
+             <div className="flex items-baseline gap-1.5">
+               <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">LKR</span>
+               <span className="text-4xl font-black tracking-tighter text-foreground">
+                 {consumptionCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+               </span>
+             </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   )
