@@ -31,6 +31,7 @@ const INITIAL_INGREDIENTS: Ingredient[] = [
 export default function BakeryIngredientList() {
   const [ingredients, setIngredients] = React.useState<Ingredient[]>(INITIAL_INGREDIENTS)
   const [searchQuery, setSearchQuery] = React.useState("")
+  const [reasons, setReasons] = React.useState<Record<string, string>>({})
 
   const handleAdd = (id: string) => {
     setIngredients(prev =>
@@ -175,6 +176,17 @@ export default function BakeryIngredientList() {
 
                   {/* Big Touch Action Controls */}
                   <div className="flex items-center gap-3 ml-2">
+                    {/* Reason Select */}
+                    <select
+                      value={reasons[item.id] || "OUT"}
+                      onChange={(e) => setReasons(prev => ({ ...prev, [item.id]: e.target.value }))}
+                      className="h-12 min-h-[48px] rounded-xl border border-border/80 bg-background/50 px-2.5 text-xs font-bold text-foreground shadow-xs cursor-pointer focus:ring-1 focus:ring-ring focus:outline-hidden"
+                    >
+                      <option value="IN">IN (Restock)</option>
+                      <option value="OUT">OUT (Production)</option>
+                      <option value="WASTE">WASTE (Spoilage)</option>
+                    </select>
+
                     <Button
                       variant="outline"
                       size="lg"
