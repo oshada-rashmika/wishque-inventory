@@ -10,6 +10,7 @@ import BakeryIngredientList from "@/components/BakeryIngredientList"
 import BakeryLogisticsDashboard from "@/components/BakeryLogisticsDashboard"
 import FloralIngredientList from "@/components/FloralIngredientList"
 import FloralLogisticsDashboard from "@/components/FloralLogisticsDashboard"
+import StoreLogisticsDashboard from "@/components/StoreLogisticsDashboard"
 
 export async function mutateStockBalance(
   itemId: string,
@@ -158,7 +159,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
     if (items) bakeryIngredients = items
   }
 
-  if (["Bakery", "Floral"].includes(profile.department) && profile.role.includes("Assistant Manager")) {
+  if (["Bakery", "Floral", "Store", "Stores"].includes(profile.department) && profile.role.includes("Assistant Manager")) {
     // 1. Fetch items
     const { data: items } = await supabase
       .from("inventory_items")
@@ -188,8 +189,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
       .order("created_at", { ascending: false })
       .limit(1000)
 
-    if (profile.department === "Floral") {
-      logsQuery = logsQuery.eq("department", "Floral")
+    if (["Floral", "Store", "Stores"].includes(profile.department)) {
+      logsQuery = logsQuery.eq("department", profile.department)
     }
 
     const { data: logs } = await logsQuery
@@ -197,7 +198,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
     if (logs) stockLogs = logs
   }
 
-  const isAsstManager = ["Bakery", "Floral"].includes(profile.department) && profile.role.includes("Assistant Manager")
+  const isAsstManager = ["Bakery", "Floral", "Store", "Stores"].includes(profile.department) && profile.role.includes("Assistant Manager")
   const lowStockItems = isAsstManager ? inventoryItems.filter((item: any) => item.current_stock <= item.minimum_threshold) : []
 
   return (
@@ -233,6 +234,13 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
         />
       ) : profile.department === "Floral" && profile.role.includes("Assistant Manager") ? (
         <FloralLogisticsDashboard
+          inventoryItems={inventoryItems}
+          initialLogs={stockLogs}
+          token={token}
+          userId={profile.id}
+        />
+      ) : (profile.department === "Store" || profile.department === "Stores") && profile.role.includes("Assistant Manager") ? (
+        <StoreLogisticsDashboard
           inventoryItems={inventoryItems}
           initialLogs={stockLogs}
           token={token}

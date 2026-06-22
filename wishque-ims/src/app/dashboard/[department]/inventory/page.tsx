@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { PackageOpen, AlertTriangle } from "lucide-react"
 import FloralIngredientList from "@/components/FloralIngredientList"
+import StoreItemsList from "@/components/StoreItemsList"
 import { mutateStockBalance } from "../page"
 
 export default async function InventoryPage({ params }: { params: Promise<{ department: string }> }) {
@@ -39,8 +40,8 @@ export default async function InventoryPage({ params }: { params: Promise<{ depa
     redirect("/login")
   }
 
-  // Only allow Assistant Manager: Bakery or Floral
-  if (!(["Bakery", "Floral"].includes(profile.department) && profile.role.includes("Assistant Manager"))) {
+  // Only allow Assistant Manager: Bakery, Floral, or Store
+  if (!(["Bakery", "Floral", "Store", "Stores"].includes(profile.department) && profile.role.includes("Assistant Manager"))) {
     redirect(`/dashboard/${departmentParam}`)
   }
 
@@ -68,6 +69,27 @@ export default async function InventoryPage({ params }: { params: Promise<{ depa
         </div>
         <div className="mt-8">
           <FloralIngredientList initialIngredients={inventoryItems} mutateStockBalance={mutateStockBalance} />
+        </div>
+      </div>
+    )
+  }
+
+  if (profile.department === "Store" || profile.department === "Stores") {
+    return (
+      <div className="space-y-6 max-w-5xl mx-auto pb-10">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight capitalize flex items-center gap-3">
+            <div className="p-2.5 bg-primary/10 rounded-2xl text-primary">
+              <PackageOpen className="h-6 w-6" />
+            </div>
+            Current Inventory
+          </h1>
+          <p className="text-muted-foreground mt-3 font-medium opacity-80">
+            A minimalist overview of your entire store stock.
+          </p>
+        </div>
+        <div className="mt-8">
+          <StoreItemsList initialIngredients={inventoryItems} mutateStockBalance={mutateStockBalance} />
         </div>
       </div>
     )
