@@ -2,18 +2,22 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { supabase } from "@/lib/supabase"
+import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react"
 
 export default function LoginPage() {
+  const router = useRouter()
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [showPassword, setShowPassword] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const [errors, setErrors] = React.useState<{ email?: string; password?: string }>({})
+  const [authError, setAuthError] = React.useState<string | null>(null)
 
   const validateForm = () => {
     const tempErrors: { email?: string; password?: string } = {}
@@ -33,13 +37,48 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setAuthError(null)
     if (!validateForm()) return
 
     setIsLoading(true)
-    // Simulate API request
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    setIsLoading(false)
-    alert("Logged in successfully (demo)!")
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) {
+        setAuthError(error.message)
+      } else {
+        router.push("/")
+        router.refresh()
+      }
+    } catch (err: any) {
+      setAuthError(err.message || "An unexpected error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSocialLogin = async (provider: "google" | "github") => {
+    setAuthError(null)
+    setIsLoading(true)
+    try {
+      const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${origin}/auth/callback`,
+        },
+      })
+      if (error) {
+        setAuthError(error.message)
+        setIsLoading(false)
+      }
+    } catch (err: any) {
+      setAuthError(err.message || `An error occurred signing in with ${provider}.`)
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -75,13 +114,25 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="grid gap-6">
+          <CardContent className="grid gap-5">
+            {/* Custom Modern UI Alert Error Banner */}
+            {authError && (
+              <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive transition-all animate-in fade-in-0 slide-in-from-top-2 duration-300">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h5 className="font-semibold leading-none tracking-tight mb-1">Sign-in failed</h5>
+                  <p className="text-xs opacity-90 leading-relaxed">{authError}</p>
+                </div>
+              </div>
+            )}
+
             {/* Social Logins */}
             <div className="grid grid-cols-2 gap-3">
               <Button
                 variant="outline"
                 className="w-full flex items-center justify-center gap-2 hover:bg-muted/80 cursor-pointer h-9 px-3 text-sm border-border/80"
-                onClick={() => alert("Google sign in - Demo")}
+                onClick={() => handleSocialLogin("google")}
+                disabled={isLoading}
               >
                 {/* Google SVG Logo */}
                 <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
@@ -95,7 +146,8 @@ export default function LoginPage() {
               <Button
                 variant="outline"
                 className="w-full flex items-center justify-center gap-2 hover:bg-muted/80 cursor-pointer h-9 px-3 text-sm border-border/80"
-                onClick={() => alert("GitHub sign in - Demo")}
+                onClick={() => handleSocialLogin("github")}
+                disabled={isLoading}
               >
                 {/* GitHub SVG Logo */}
                 <svg className="h-4 w-4 fill-current shrink-0" viewBox="0 0 24 24">
@@ -127,6 +179,7 @@ export default function LoginPage() {
                   onChange={(e) => {
                     setEmail(e.target.value)
                     if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }))
+                    if (authError) setAuthError(null)
                   }}
                   aria-invalid={!!errors.email}
                   disabled={isLoading}
@@ -159,6 +212,7 @@ export default function LoginPage() {
                     onChange={(e) => {
                       setPassword(e.target.value)
                       if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }))
+                      if (authError) setAuthError(null)
                     }}
                     aria-invalid={!!errors.password}
                     disabled={isLoading}
@@ -222,3 +276,4 @@ export default function LoginPage() {
     </div>
   )
 }
+
