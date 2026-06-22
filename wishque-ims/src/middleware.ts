@@ -42,11 +42,23 @@ export async function middleware(req: NextRequest) {
       throw new Error('Profile unconfigured')
     }
 
+    const DEPARTMENT_SLUGS = [
+      'hr',
+      'accounts',
+      'operations',
+      'product-development',
+      'bakery',
+      'floral',
+      'stores'
+    ]
+
     const normalizedUserDept = profile.department.toLowerCase().replace(/\s+/g, '-')
     const pathSegments = req.nextUrl.pathname.split('/').filter(Boolean)
     const attemptedDept = pathSegments[1]
 
-    if (attemptedDept && attemptedDept !== normalizedUserDept) {
+    const isDepartmentRoute = DEPARTMENT_SLUGS.includes(attemptedDept)
+
+    if (isDepartmentRoute && attemptedDept !== normalizedUserDept) {
       url.pathname = `/dashboard/${normalizedUserDept}`
       return NextResponse.redirect(url)
     }
