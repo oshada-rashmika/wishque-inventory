@@ -5,7 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import BakeryIngredientList from "@/components/BakeryIngredientList"
 import BakeryLogisticsDashboard from "@/components/BakeryLogisticsDashboard"
 
-export async function mutateStockBalance(itemId: string, newStock: number) {
+export async function mutateStockBalance(
+  itemId: string,
+  newStock: number,
+  quantityChanged: number,
+  type: "IN" | "OUT" | "WASTE"
+) {
   "use server"
 
   if (!itemId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(itemId)) {
@@ -14,6 +19,14 @@ export async function mutateStockBalance(itemId: string, newStock: number) {
 
   if (typeof newStock !== "number" || isNaN(newStock) || newStock < 0) {
     throw new Error("Stock value must be a valid non-negative number.")
+  }
+
+  if (typeof quantityChanged !== "number" || isNaN(quantityChanged) || quantityChanged <= 0) {
+    throw new Error("Quantity changed must be a positive number.")
+  }
+
+  if (type !== "IN" && type !== "OUT" && type !== "WASTE") {
+    throw new Error("Invalid mutation type. Must be IN, OUT, or WASTE.")
   }
 
   const cookieStore = await cookies()
@@ -29,19 +42,38 @@ export async function mutateStockBalance(itemId: string, newStock: number) {
     global: { headers: { Authorization: `Bearer ${token}` } }
   })
 
-  const { data, error } = await supabase
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  if (userError || !user) {
+    throw new Error("User session expired or invalid.")
+  }
+
+  const { data: updatedItem, error: updateError } = await supabase
     .from("inventory_items")
     .update({ current_stock: parseFloat(newStock.toFixed(2)) })
     .eq("id", itemId)
     .select("id, name, current_stock")
     .single()
 
-  if (error) {
-    console.error(`[MUTATE_STOCK_FAIL] Failed to update stock for item ${itemId}: ${error.message}`)
-    throw new Error(`Failed to update stock: ${error.message}`)
+  if (updateError) {
+    console.error(`[MUTATE_STOCK_FAIL] Failed to update stock for item ${itemId}: ${updateError.message}`)
+    throw new Error(`Failed to update stock: ${updateError.message}`)
   }
 
-  return { success: true, updatedItem: data }
+  const { error: logError } = await supabase
+    .from("stock_logs")
+    .insert({
+      item_id: itemId,
+      quantity_changed: quantityChanged,
+      type: type,
+      user_id: user.id
+    })
+
+  if (logError) {
+    console.error(`[MUTATE_STOCK_LOG_FAIL] Failed to write transaction log for item ${itemId}: ${logError.message}`)
+    throw new Error(`Stock updated, but failed to write log: ${logError.message}`)
+  }
+
+  return { success: true, updatedItem }
 }
 
 export default async function DashboardPage({ params }: { params: Promise<{ department: string }> }) {
