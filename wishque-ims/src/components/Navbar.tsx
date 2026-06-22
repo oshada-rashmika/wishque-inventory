@@ -4,10 +4,19 @@ import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
-import { LogOut } from "lucide-react"
+import { LogOut, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { logoutAction } from "@/app/actions/auth"
 import { cn } from "@/lib/utils"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
 
 export interface UserProfile {
   full_name: string | null
@@ -41,6 +50,15 @@ const getDepartmentStyles = (dept: string) => {
       return "bg-slate-500/10 text-slate-700 border border-slate-500/20 dark:bg-slate-500/20 dark:text-slate-300 dark:border-slate-500/30"
   }
 }
+
+const getInitials = (name: string | null) => {
+  if (!name) return "UI"
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 0) return "UI"
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase()
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+}
+
 
 export default function Navbar({ profile }: NavbarProps) {
   const router = useRouter()
@@ -129,57 +147,56 @@ export default function Navbar({ profile }: NavbarProps) {
 
         {/* User Details & Actions Section */}
         <div className="flex items-center gap-3 sm:gap-4">
-          {/* Department Badge (Desktop) */}
-          <div className="hidden sm:inline-flex">
-            <span className={cn(
-              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold tracking-wide shadow-xs transition-colors",
-              deptStyles
-            )}>
-              {profile.department}
-            </span>
-          </div>
-
-          {/* User Profile Info */}
-          <div className="flex flex-col text-right">
-            <span className="text-xs sm:text-sm font-medium text-foreground leading-none tracking-tight">
-              {profile.full_name || "IMS User"}
-            </span>
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 font-normal leading-none">
-              {profile.role}
-            </span>
-          </div>
-
-          {/* Department Badge (Mobile) */}
-          <div className="sm:hidden">
-            <span className={cn(
-              "inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold tracking-wide shadow-xs transition-colors",
-              deptStyles
-            )}>
-              {profile.department}
-            </span>
-          </div>
-
-          {/* Divider */}
-          <div className="h-6 w-px bg-border/60" />
-
-          {/* Log Out Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSignOut}
-            disabled={isLoggingOut}
-            className="gap-2 cursor-pointer text-xs h-9 px-3 rounded-xl hover:bg-destructive/10 hover:text-destructive transition-colors text-muted-foreground"
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden xs:inline font-bold">
-              {isLoggingOut ? "Logging out..." : "Log Out"}
-            </span>
-            <span className="xs:hidden">
-              {isLoggingOut ? "..." : "Exit"}
-            </span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="relative h-10 w-10 rounded-full flex items-center justify-center bg-muted/60 hover:bg-muted ring-offset-background transition-all hover:ring-2 hover:ring-primary/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer select-none p-0 overflow-hidden border border-border/40"
+              >
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/20 text-primary font-bold text-sm tracking-wide">
+                  {getInitials(profile.full_name)}
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-64!" align="end" sideOffset={8}>
+              <DropdownMenuLabel className="font-normal p-3">
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 shrink-0 rounded-full bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center text-sm font-bold text-primary border border-border/40">
+                      {getInitials(profile.full_name)}
+                    </div>
+                    <div className="flex flex-col space-y-0.5 min-w-0">
+                      <p className="text-sm font-bold leading-none text-foreground truncate">
+                        {profile.full_name || "IMS User"}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground font-medium leading-tight truncate">
+                        {profile.role}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 pt-2 border-t border-border/40">
+                    <span className={cn(
+                      "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold tracking-wide shadow-2xs transition-colors",
+                      deptStyles
+                    )}>
+                      {profile.department}
+                    </span>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleSignOut}
+                disabled={isLoggingOut}
+                className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive p-2.5 rounded-md flex items-center font-bold text-xs"
+              >
+                <LogOut className="mr-2 h-4 w-4 shrink-0" />
+                <span>{isLoggingOut ? "Logging out..." : "Log Out"}</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
   )
 }
+
