@@ -5,6 +5,45 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import BakeryIngredientList from "@/components/BakeryIngredientList"
 import BakeryLogisticsDashboard from "@/components/BakeryLogisticsDashboard"
 
+export async function mutateStockBalance(itemId: string, newStock: number) {
+  "use server"
+
+  if (!itemId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(itemId)) {
+    throw new Error("Invalid item ID format.")
+  }
+
+  if (typeof newStock !== "number" || isNaN(newStock) || newStock < 0) {
+    throw new Error("Stock value must be a valid non-negative number.")
+  }
+
+  const cookieStore = await cookies()
+  const token = cookieStore.get("sb-access-token")?.value
+
+  if (!token) {
+    throw new Error("Unauthorized access.")
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } }
+  })
+
+  const { data, error } = await supabase
+    .from("inventory_items")
+    .update({ current_stock: parseFloat(newStock.toFixed(2)) })
+    .eq("id", itemId)
+    .select("id, name, current_stock")
+    .single()
+
+  if (error) {
+    console.error(`[MUTATE_STOCK_FAIL] Failed to update stock for item ${itemId}: ${error.message}`)
+    throw new Error(`Failed to update stock: ${error.message}`)
+  }
+
+  return { success: true, updatedItem: data }
+}
+
 export default async function DashboardPage({ params }: { params: Promise<{ department: string }> }) {
   const resolvedParams = await params
   const departmentParam = resolvedParams.department
