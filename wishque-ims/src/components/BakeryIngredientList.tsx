@@ -174,12 +174,12 @@ export default function BakeryIngredientList() {
                   </div>
 
                   {/* Big Touch Action Controls */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 ml-2">
                     <Button
                       variant="outline"
                       size="lg"
                       onClick={() => handleDeduct(item.id)}
-                      className="size-11 rounded-xl cursor-pointer hover:bg-destructive/10 hover:text-destructive border-border/70 hover:border-destructive/30 active:scale-95 transition-all"
+                      className="size-12 min-h-[48px] rounded-xl cursor-pointer hover:bg-destructive/10 hover:text-destructive border-border/70 hover:border-destructive/30 active:scale-95 transition-all flex items-center justify-center shrink-0"
                       aria-label={`Deduct from ${item.name}`}
                     >
                       <Minus className="h-5 w-5" />
@@ -188,7 +188,7 @@ export default function BakeryIngredientList() {
                       variant="outline"
                       size="lg"
                       onClick={() => handleAdd(item.id)}
-                      className="size-11 rounded-xl cursor-pointer hover:bg-emerald-500/10 hover:text-emerald-600 border-border/70 hover:border-emerald-500/30 active:scale-95 transition-all"
+                      className="size-12 min-h-[48px] rounded-xl cursor-pointer hover:bg-emerald-500/10 hover:text-emerald-600 border-border/70 hover:border-emerald-500/30 active:scale-95 transition-all flex items-center justify-center shrink-0"
                       aria-label={`Add to ${item.name}`}
                     >
                       <Plus className="h-5 w-5" />
