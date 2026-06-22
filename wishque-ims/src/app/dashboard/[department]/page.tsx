@@ -2,6 +2,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AlertTriangle } from "lucide-react"
 import BakeryIngredientList from "@/components/BakeryIngredientList"
 import BakeryLogisticsDashboard from "@/components/BakeryLogisticsDashboard"
 
@@ -134,7 +135,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
     // 1. Fetch bakery items
     const { data: items } = await supabase
       .from("inventory_items")
-      .select("id, name, unit, current_stock")
+      .select("id, name, unit, current_stock, minimum_threshold")
       .eq("department", "Bakery")
       .order("name", { ascending: true })
 
@@ -163,8 +164,22 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
     if (logs) stockLogs = logs
   }
 
+  const isBakeryAsstManager = profile.department === "Bakery" && profile.role.includes("Assistant Manager")
+  const lowStockItems = isBakeryAsstManager ? inventoryItems.filter((item: any) => item.current_stock <= item.minimum_threshold) : []
+
   return (
     <div className="space-y-6">
+      {lowStockItems.length > 0 && (
+        <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl shadow-sm flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+          <div className="p-2 bg-red-500/20 rounded-xl">
+            <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0" />
+          </div>
+          <p className="text-sm text-red-800 dark:text-red-300 font-medium leading-relaxed">
+            <strong className="font-bold">⚠️ Attention:</strong> [{lowStockItems.map((i: any) => i.name).join(", ")}] {lowStockItems.length === 1 ? "is" : "are"} currently below safety thresholds!
+          </p>
+        </div>
+      )}
+
       <div>
         <h1 className="text-3xl font-bold tracking-tight capitalize">
           {profile.department} Dashboard

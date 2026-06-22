@@ -61,10 +61,12 @@ export default function Navbar({ profile }: NavbarProps) {
   const deptStyles = getDepartmentStyles(profile.department)
   const normalizedDept = profile.department.trim().toLowerCase()
   const showProductsLink = normalizedDept === "bakery" || normalizedDept === "floral"
+  const isBakeryAsstManager = normalizedDept === "bakery" && profile.role.includes("Assistant Manager")
   const dashboardPath = `/dashboard/${profile.department.toLowerCase().replace(/\s+/g, "-")}`
   
   const isActiveDashboard = pathname === dashboardPath
   const isActiveProducts = pathname === "/dashboard/products"
+  const isActiveInventory = pathname === `${dashboardPath}/inventory`
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
@@ -103,6 +105,19 @@ export default function Navbar({ profile }: NavbarProps) {
               >
                 Dashboard
               </Link>
+              {isBakeryAsstManager && (
+                <Link
+                  href={`${dashboardPath}/inventory`}
+                  className={cn(
+                    "px-2.5 py-1 text-xs font-semibold rounded-md transition-colors",
+                    isActiveInventory 
+                      ? "bg-secondary text-foreground" 
+                      : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+                  )}
+                >
+                  Current Inventory
+                </Link>
+              )}
               <Link
                 href="/dashboard/products"
                 className={cn(
