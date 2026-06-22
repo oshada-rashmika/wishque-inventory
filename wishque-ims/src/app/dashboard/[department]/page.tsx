@@ -8,12 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { AlertTriangle, DollarSign, Calculator } from "lucide-react"
 import BakeryIngredientList from "@/components/BakeryIngredientList"
 import BakeryLogisticsDashboard from "@/components/BakeryLogisticsDashboard"
+import FloralIngredientList from "@/components/FloralIngredientList"
+import FloralLogisticsDashboard from "@/components/FloralLogisticsDashboard"
 
 export async function mutateStockBalance(
   itemId: string,
   newStock: number,
   quantityChanged: number,
-  type: "IN" | "OUT" | "WASTE"
+  type: "IN" | "OUT" | "WASTE",
+  department?: string
 ) {
   "use server"
 
@@ -63,15 +66,21 @@ export async function mutateStockBalance(
     throw new Error(`Failed to update stock: ${updateError.message}`)
   }
 
+  const logPayload: any = {
+    id: crypto.randomUUID(),
+    item_id: itemId,
+    quantity_changed: quantityChanged,
+    type: type,
+    user_id: user.id
+  }
+
+  if (department) {
+    logPayload.department = department
+  }
+
   const { error: logError } = await supabase
     .from("stock_logs")
-    .insert({
-      id: crypto.randomUUID(),
-      item_id: itemId,
-      quantity_changed: quantityChanged,
-      type: type,
-      user_id: user.id
-    })
+    .insert(logPayload)
 
   if (logError) {
     console.error(`[MUTATE_STOCK_LOG_FAIL] Failed to write transaction log for item ${itemId}: ${logError.message}`)
@@ -135,7 +144,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
     }
   }
 
-  // Fetch logistics data server-side if user is Bakery Assistant Manager
+  // Fetch logistics data server-side
   let stockLogs: any[] = []
   let inventoryItems: any[] = []
   let bakeryIngredients: any[] = []
@@ -149,18 +158,18 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
     if (items) bakeryIngredients = items
   }
 
-  if (profile.department === "Bakery" && profile.role.includes("Assistant Manager")) {
-    // 1. Fetch bakery items
+  if (["Bakery", "Floral"].includes(profile.department) && profile.role.includes("Assistant Manager")) {
+    // 1. Fetch items
     const { data: items } = await supabase
       .from("inventory_items")
       .select("id, name, unit, current_stock, minimum_threshold")
-      .eq("department", "Bakery")
+      .eq("department", profile.department)
       .order("name", { ascending: true })
 
     if (items) inventoryItems = items
 
     // 2. Fetch stock logs
-    const { data: logs } = await supabase
+    let logsQuery = supabase
       .from("stock_logs")
       .select(`
         id,
@@ -179,11 +188,17 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
       .order("created_at", { ascending: false })
       .limit(1000)
 
+    if (profile.department === "Floral") {
+      logsQuery = logsQuery.eq("department", "Floral")
+    }
+
+    const { data: logs } = await logsQuery
+
     if (logs) stockLogs = logs
   }
 
-  const isBakeryAsstManager = profile.department === "Bakery" && profile.role.includes("Assistant Manager")
-  const lowStockItems = isBakeryAsstManager ? inventoryItems.filter((item: any) => item.current_stock <= item.minimum_threshold) : []
+  const isAsstManager = ["Bakery", "Floral"].includes(profile.department) && profile.role.includes("Assistant Manager")
+  const lowStockItems = isAsstManager ? inventoryItems.filter((item: any) => item.current_stock <= item.minimum_threshold) : []
 
   return (
     <div className="space-y-6">
@@ -211,6 +226,13 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
         <BakeryIngredientList initialIngredients={bakeryIngredients} mutateStockBalance={mutateStockBalance} />
       ) : profile.department === "Bakery" && profile.role.includes("Assistant Manager") ? (
         <BakeryLogisticsDashboard
+          inventoryItems={inventoryItems}
+          initialLogs={stockLogs}
+          token={token}
+          userId={profile.id}
+        />
+      ) : profile.department === "Floral" && profile.role.includes("Assistant Manager") ? (
+        <FloralLogisticsDashboard
           inventoryItems={inventoryItems}
           initialLogs={stockLogs}
           token={token}
