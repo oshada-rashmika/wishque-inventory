@@ -49,12 +49,11 @@ as $$
 	);
 $$;
 
-create policy "Profiles are self- or admin-visible"
+create policy "Profiles are visible to all authenticated users"
 on public.profiles
 for select
 using (
-	id = auth.uid()
-	or public.current_user_role() = 'Admin'
+	auth.role() = 'authenticated'
 );
 
 create policy "Profiles are self- or admin-editable"

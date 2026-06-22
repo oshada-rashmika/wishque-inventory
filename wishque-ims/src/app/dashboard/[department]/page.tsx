@@ -130,7 +130,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
     if (items) bakeryIngredients = items
   }
 
-  if (profile.department === "Bakery" && profile.role === "Assistant Manager") {
+  if (profile.department === "Bakery" && profile.role.includes("Assistant Manager")) {
     // 1. Fetch bakery items
     const { data: items } = await supabase
       .from("inventory_items")
@@ -151,10 +151,14 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
         inventory_items:item_id (
           name,
           unit
+        ),
+        profiles:user_id (
+          full_name,
+          role
         )
       `)
       .order("created_at", { ascending: false })
-      .limit(10)
+      .limit(1000)
 
     if (logs) stockLogs = logs
   }
@@ -170,9 +174,9 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
         </p>
       </div>
 
-      {profile.department === "Bakery" && profile.role === "Head Chef" ? (
+      {profile.department === "Bakery" && profile.role.includes("Head Chef") ? (
         <BakeryIngredientList initialIngredients={bakeryIngredients} mutateStockBalance={mutateStockBalance} />
-      ) : profile.department === "Bakery" && profile.role === "Assistant Manager" ? (
+      ) : profile.department === "Bakery" && profile.role.includes("Assistant Manager") ? (
         <BakeryLogisticsDashboard
           inventoryItems={inventoryItems}
           initialLogs={stockLogs}
@@ -181,7 +185,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {profile.department === "HR" && profile.role === "Assistant Manager" && (
+          {profile.department === "HR" && profile.role.includes("Assistant Manager") && (
             <>
               <Card>
                 <CardHeader>
@@ -202,7 +206,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
             </>
           )}
 
-          {!(profile.department === "HR" && profile.role === "Assistant Manager") && (
+          {!(profile.department === "HR" && profile.role.includes("Assistant Manager")) && (
             <Card>
               <CardHeader>
                 <CardTitle>General Overview</CardTitle>
@@ -217,3 +221,4 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
     </div>
   )
 }
+

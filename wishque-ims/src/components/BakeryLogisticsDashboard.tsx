@@ -25,6 +25,10 @@ interface StockLog {
     name: string
     unit: string
   } | null
+  profiles?: {
+    full_name: string
+    role: string
+  } | null
 }
 
 interface BakeryLogisticsDashboardProps {
@@ -46,6 +50,41 @@ export default function BakeryLogisticsDashboard({
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [successMsg, setSuccessMsg] = React.useState<string | null>(null)
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null)
+  const [timeFilter, setTimeFilter] = React.useState<"all" | "last_week" | "last_month" | "custom_date">("all")
+  const [customDate, setCustomDate] = React.useState<string>("")
+
+  React.useEffect(() => {
+    if (successMsg || errorMsg) {
+      const timer = setTimeout(() => {
+        setSuccessMsg(null)
+        setErrorMsg(null)
+      }, 30000)
+      return () => clearTimeout(timer)
+    }
+  }, [successMsg, errorMsg])
+
+  const filteredLogs = React.useMemo(() => {
+    const now = new Date()
+    return logs.filter(log => {
+      const logDate = new Date(log.created_at)
+      if (timeFilter === "all") return true
+      if (timeFilter === "last_week") {
+        const oneWeekAgo = new Date()
+        oneWeekAgo.setDate(now.getDate() - 7)
+        return logDate >= oneWeekAgo
+      }
+      if (timeFilter === "last_month") {
+        const oneMonthAgo = new Date()
+        oneMonthAgo.setMonth(now.getMonth() - 1)
+        return logDate >= oneMonthAgo
+      }
+      if (timeFilter === "custom_date" && customDate) {
+        const cd = new Date(customDate)
+        return logDate.getDate() === cd.getDate() && logDate.getMonth() === cd.getMonth() && logDate.getFullYear() === cd.getFullYear()
+      }
+      return true
+    })
+  }, [logs, timeFilter, customDate])
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -75,6 +114,7 @@ export default function BakeryLogisticsDashboard({
       const { data: newLog, error: logError } = await clientSupabase
         .from("stock_logs")
         .insert({
+          id: crypto.randomUUID(),
           item_id: selectedItemId,
           quantity_changed: parsedQty,
           type: "incoming",
@@ -88,6 +128,10 @@ export default function BakeryLogisticsDashboard({
           inventory_items:item_id (
             name,
             unit
+          ),
+          profiles:user_id (
+            full_name,
+            role
           )
         `)
         .single()
@@ -125,28 +169,30 @@ export default function BakeryLogisticsDashboard({
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-3">
+    <div className="grid gap-8 md:grid-cols-3">
       {/* Shipment Entry Form */}
-      <Card className="md:col-span-1 border border-border/60 bg-card/45 backdrop-blur-md shadow-xs h-fit">
-        <CardHeader>
-          <CardTitle className="text-lg font-bold flex items-center gap-2">
-            <ArrowDownToLine className="h-5 w-5 text-primary" />
+      <Card className="md:col-span-1 border-0 shadow-lg bg-card/40 backdrop-blur-xl rounded-3xl h-full overflow-hidden flex flex-col">
+        <CardHeader className="pb-4 shrink-0">
+          <CardTitle className="text-xl font-extrabold flex items-center gap-2.5">
+            <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
+              <ArrowDownToLine className="h-5 w-5" />
+            </div>
             Receive Shipment
           </CardTitle>
-          <CardDescription className="text-xs">
+          <CardDescription className="text-sm mt-1.5 opacity-80">
             Log incoming bakery ingredients directly to warehouse storage.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleRegisterShipment} className="space-y-4">
-            <div className="space-y-1.5">
+        <CardContent className="flex-1 flex flex-col">
+          <form onSubmit={handleRegisterShipment} className="space-y-5 flex-1 flex flex-col">
+            <div className="space-y-1.5 shrink-0">
               <Label htmlFor="item">Select Ingredient</Label>
               <select
                 id="item"
                 value={selectedItemId}
                 onChange={(e) => setSelectedItemId(e.target.value)}
                 disabled={isSubmitting}
-                className="w-full h-9 rounded-lg border border-input bg-background/50 px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring focus:border-ring"
+                className="w-full h-11 rounded-xl border border-input/50 bg-background/80 px-3.5 py-2 text-sm shadow-xs transition-colors hover:bg-background focus:bg-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40 focus:border-primary/40"
               >
                 {inventoryItems.map(item => (
                   <option key={item.id} value={item.id}>
@@ -156,7 +202,7 @@ export default function BakeryLogisticsDashboard({
               </select>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 shrink-0">
               <Label htmlFor="quantity">Quantity Received</Label>
               <div className="relative">
                 <Input
@@ -167,7 +213,7 @@ export default function BakeryLogisticsDashboard({
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                   disabled={isSubmitting}
-                  className="pr-16 bg-background/50 focus:bg-background transition-all"
+                  className="pr-16 h-11 rounded-xl border-input/50 bg-background/80 hover:bg-background focus:bg-background transition-all focus-visible:ring-2 focus-visible:ring-primary/40"
                   required
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground pointer-events-none select-none">
@@ -176,75 +222,104 @@ export default function BakeryLogisticsDashboard({
               </div>
             </div>
 
-            {errorMsg && (
-              <div className="flex items-start gap-2.5 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive animate-in fade-in slide-in-from-top-1">
-                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                <p className="leading-tight">{errorMsg}</p>
-              </div>
-            )}
+            <div className="mt-auto pt-4 shrink-0 relative">
+              <div className="absolute bottom-full left-0 right-0 mb-4 flex flex-col gap-2 z-10">
+                {errorMsg && (
+                  <div className="flex items-start gap-2.5 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive animate-in fade-in slide-in-from-top-1 shadow-md">
+                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <p className="leading-tight">{errorMsg}</p>
+                  </div>
+                )}
 
-            {successMsg && (
-              <div className="flex items-start gap-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-600 dark:text-emerald-400 animate-in fade-in slide-in-from-top-1">
-                <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
-                <p className="leading-tight">{successMsg}</p>
+                {successMsg && (
+                  <div className="flex items-start gap-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-600 dark:text-emerald-400 animate-in fade-in slide-in-from-top-1 shadow-md">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+                    <p className="leading-tight">{successMsg}</p>
+                  </div>
+                )}
               </div>
-            )}
-
-            <Button
-              type="submit"
-              disabled={isSubmitting || !selectedItemId}
-              className="w-full cursor-pointer h-9 gap-1.5 mt-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Logging shipment...
-                </>
-              ) : (
-                <>
-                  <Plus className="h-4 w-4" />
-                  Log Goods Arrival
-                </>
-              )}
-            </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting || !selectedItemId}
+                className="w-full h-12 rounded-xl text-base font-bold tracking-tight gap-2 shadow-md hover:shadow-lg transition-all"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Logging...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-5 w-5" />
+                    Log Goods Arrival
+                  </>
+                )}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
 
       {/* Logistics Journal Log */}
-      <Card className="md:col-span-2 border border-border/60 bg-card/45 backdrop-blur-md shadow-xs">
-        <CardHeader>
-          <CardTitle className="text-lg font-bold flex items-center gap-2">
-            <History className="h-5 w-5 text-primary" />
-            Logistics Journal
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Review live operational logs and shipment entries for bakery logistics.
-          </CardDescription>
+      <Card className="md:col-span-2 border-0 shadow-lg bg-card/40 backdrop-blur-xl rounded-3xl h-full overflow-hidden flex flex-col">
+        <CardHeader className="pb-4 shrink-0 flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
+          <div>
+            <CardTitle className="text-xl font-extrabold flex items-center gap-2.5">
+              <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
+                <History className="h-5 w-5" />
+              </div>
+              Logistics Journal
+            </CardTitle>
+            <CardDescription className="text-sm mt-1.5 opacity-80">
+              Review live operational logs and shipment entries for bakery logistics.
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <select
+              value={timeFilter}
+              onChange={e => setTimeFilter(e.target.value as any)}
+              className="h-10 rounded-xl border border-input/50 bg-background/80 px-3 text-sm shadow-xs focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none"
+            >
+              <option value="all">All Time</option>
+              <option value="last_week">Within last week</option>
+              <option value="last_month">Within last month</option>
+              <option value="custom_date">Specific Date...</option>
+            </select>
+            {timeFilter === "custom_date" && (
+              <Input
+                type="date"
+                value={customDate}
+                onChange={e => setCustomDate(e.target.value)}
+                className="h-10 w-auto rounded-xl border-input/50 bg-background/80"
+              />
+            )}
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {logs.length > 0 ? (
-            <div className="divide-y divide-border/40 rounded-xl border border-border/60 bg-background/50 overflow-hidden">
-              {logs.map((log) => {
-                const isIncoming = log.type === "incoming"
+        <CardContent className="space-y-4 pt-2 flex-1 flex flex-col min-h-0">
+          {filteredLogs.length > 0 ? (
+            <div className="flex flex-col gap-3 overflow-y-auto pr-2 max-h-[460px]">
+              {filteredLogs.map((log) => {
+                const isIncoming = log.type === "incoming" || log.type === "IN"
                 const item = log.inventory_items
+                const fullName = log.profiles?.full_name || "Unknown User"
+                const role = log.profiles?.role || "Staff"
 
                 return (
-                  <div key={log.id} className="flex items-center justify-between p-3.5 hover:bg-accent/5 transition-colors">
-                    <div className="flex items-center gap-3">
+                  <div key={log.id} className="group flex items-center justify-between p-4 rounded-2xl bg-background/50 border border-border/30 hover:bg-background hover:shadow-md hover:border-border/60 transition-all duration-300">
+                    <div className="flex items-center gap-4">
                       <div className={cn(
-                        "p-2 rounded-lg shrink-0",
-                        isIncoming ? "bg-emerald-500/10 text-emerald-600" : "bg-blue-500/10 text-blue-600"
+                        "p-3 rounded-xl shrink-0 transition-transform duration-300 group-hover:scale-110",
+                        isIncoming ? "bg-emerald-500/15 text-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.15)]" : "bg-blue-500/15 text-blue-600 shadow-[0_0_15px_rgba(59,130,246,0.15)]"
                       )}>
-                        <Package className="h-4 w-4" />
+                        <Package className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-foreground">
+                        <p className="text-sm font-bold text-foreground tracking-tight">
                           {item ? item.name : "Inventory Item"}
                         </p>
-                        <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
+                        <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground mt-1 opacity-80">
+                          <span className="flex items-center gap-1.5">
+                            <Calendar className="h-3.5 w-3.5" />
                             {new Date(log.created_at).toLocaleDateString("en-US", {
                               month: "short",
                               day: "numeric",
@@ -252,17 +327,17 @@ export default function BakeryLogisticsDashboard({
                               minute: "2-digit"
                             })}
                           </span>
-                          <span className="flex items-center gap-1 capitalize">
-                            <User className="h-3 w-3" />
-                            {log.type} Action
+                          <span className="flex items-center gap-1.5 capitalize bg-background/60 px-2 py-0.5 rounded-md border border-border/50">
+                            <User className="h-3.5 w-3.5" />
+                            {fullName} ({role}) • {log.type} Action
                           </span>
                         </div>
                       </div>
                     </div>
 
                     <span className={cn(
-                      "text-sm font-extrabold tracking-tight",
-                      isIncoming ? "text-emerald-600 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400"
+                      "text-base font-black tracking-tight px-3 py-1 rounded-lg backdrop-blur-sm",
+                      isIncoming ? "text-emerald-600 bg-emerald-500/10 dark:text-emerald-400" : "text-blue-600 bg-blue-500/10 dark:text-blue-400"
                     )}>
                       {isIncoming ? "+" : "-"}{log.quantity_changed} {item?.unit}
                     </span>
