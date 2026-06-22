@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import BakeryIngredientList from "@/components/BakeryIngredientList"
+import BakeryLogisticsDashboard from "@/components/BakeryLogisticsDashboard"
 
 export default async function DashboardPage({ params }: { params: Promise<{ department: string }> }) {
   const resolvedParams = await params
@@ -29,7 +30,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("department, role")
+    .select("id, department, role")
     .eq("id", user.id)
     .single()
 
@@ -41,6 +42,39 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
 
   if (normalizedDept !== departmentParam) {
     redirect(`/dashboard/${normalizedDept}`)
+  }
+
+  // Fetch logistics data server-side if user is Bakery Assistant Manager
+  let stockLogs: any[] = []
+  let inventoryItems: any[] = []
+
+  if (profile.department === "Bakery" && profile.role === "Assistant Manager") {
+    // 1. Fetch bakery items
+    const { data: items } = await supabase
+      .from("inventory_items")
+      .select("id, name, unit, current_stock")
+      .eq("department", "Bakery")
+      .order("name", { ascending: true })
+
+    if (items) inventoryItems = items
+
+    // 2. Fetch stock logs
+    const { data: logs } = await supabase
+      .from("stock_logs")
+      .select(`
+        id,
+        quantity_changed,
+        type,
+        created_at,
+        inventory_items:item_id (
+          name,
+          unit
+        )
+      `)
+      .order("created_at", { ascending: false })
+      .limit(10)
+
+    if (logs) stockLogs = logs
   }
 
   return (
@@ -56,6 +90,13 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
 
       {profile.department === "Bakery" && profile.role === "Head Chef" ? (
         <BakeryIngredientList />
+      ) : profile.department === "Bakery" && profile.role === "Assistant Manager" ? (
+        <BakeryLogisticsDashboard
+          inventoryItems={inventoryItems}
+          initialLogs={stockLogs}
+          token={token}
+          userId={profile.id}
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {profile.department === "HR" && profile.role === "Assistant Manager" && (
