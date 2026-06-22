@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Image from "next/image"
-import { Search, Plus, Minus, AlertTriangle, CheckCircle, Package } from "lucide-react"
+import { Search, Plus, Minus, AlertTriangle, CheckCircle, Package, Loader2, Edit2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
@@ -16,47 +16,99 @@ interface Ingredient {
   minThreshold: number
 }
 
-const INITIAL_INGREDIENTS: Ingredient[] = [
-  { id: "1", name: "Oreos", image: "https://images.unsplash.com/photo-1531257243018-c547a2e35767?w=120&h=120&fit=crop", stock: 18, unit: "packs", minThreshold: 10 },
-  { id: "2", name: "Strawberries", image: "https://images.unsplash.com/photo-1568966299181-bb7282cc84f0?w=120&h=120&fit=crop", stock: 8.5, unit: "kg", minThreshold: 5 },
-  { id: "3", name: "Flour", image: "https://images.unsplash.com/photo-1627485937980-221c88ac04f9?w=120&h=120&fit=crop", stock: 120, unit: "kg", minThreshold: 50 },
-  { id: "4", name: "Edible pearls", image: "https://images.unsplash.com/photo-1607516720808-c137456790c3?w=120&h=120&fit=crop", stock: 3.2, unit: "kg", minThreshold: 2 },
-  { id: "5", name: "Baking powder", image: "https://images.unsplash.com/photo-1638405803126-d12de49c7d47?w=120&h=120&fit=crop", stock: 15, unit: "cans", minThreshold: 5 },
-  { id: "6", name: "Sugar", image: "https://images.unsplash.com/photo-1673791031093-eb8eefa60083?w=120&h=120&fit=crop", stock: 85, unit: "kg", minThreshold: 30 },
-  { id: "7", name: "Butter", image: "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=120&h=120&fit=crop", stock: 42, unit: "kg", minThreshold: 20 },
-  { id: "8", name: "Vanilla", image: "https://images.unsplash.com/photo-1682482003115-b6abbd9e6834?w=120&h=120&fit=crop", stock: 4.8, unit: "liters", minThreshold: 2 },
-  { id: "9", name: "Cocoa", image: "https://images.unsplash.com/photo-1507576164121-220762647800?w=120&h=120&fit=crop", stock: 12.5, unit: "kg", minThreshold: 8 }
-]
+interface DatabaseIngredient {
+  id: string
+  name: string
+  unit: string
+  current_stock: number
+  minimum_threshold: number
+}
 
-export default function BakeryIngredientList() {
-  const [ingredients, setIngredients] = React.useState<Ingredient[]>(INITIAL_INGREDIENTS)
+interface BakeryIngredientListProps {
+  initialIngredients: DatabaseIngredient[]
+  mutateStockBalance: (
+    itemId: string,
+    newStock: number,
+    quantityChanged: number,
+    type: "IN" | "OUT" | "WASTE"
+  ) => Promise<{ success: boolean; updatedItem: any }>
+}
+
+const IMAGE_MAP: Record<string, string> = {
+  Oreos: "https://images.unsplash.com/photo-1531257243018-c547a2e35767?w=120&h=120&fit=crop",
+  Strawberries: "https://images.unsplash.com/photo-1568966299181-bb7282cc84f0?w=120&h=120&fit=crop",
+  Flour: "https://images.unsplash.com/photo-1627485937980-221c88ac04f9?w=120&h=120&fit=crop",
+  "Edible pearls": "https://images.unsplash.com/photo-1607516720808-c137456790c3?w=120&h=120&fit=crop",
+  "Baking powder": "https://images.unsplash.com/photo-1638405803126-d12de49c7d47?w=120&h=120&fit=crop",
+  Sugar: "https://images.unsplash.com/photo-1673791031093-eb8eefa60083?w=120&h=120&fit=crop",
+  Butter: "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=120&h=120&fit=crop",
+  Vanilla: "https://images.unsplash.com/photo-1682482003115-b6abbd9e6834?w=120&h=120&fit=crop",
+  Cocoa: "https://images.unsplash.com/photo-1507576164121-220762647800?w=120&h=120&fit=crop"
+}
+
+export default function BakeryIngredientList({ initialIngredients, mutateStockBalance }: BakeryIngredientListProps) {
+  // Map database inventory items into our component format
+  const getMappedIngredients = React.useCallback((items: DatabaseIngredient[]): Ingredient[] => {
+    return items.map(item => ({
+      id: item.id,
+      name: item.name,
+      unit: item.unit,
+      stock: item.current_stock,
+      minThreshold: item.minimum_threshold,
+      image: IMAGE_MAP[item.name] || "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=120&h=120&fit=crop"
+    }))
+  }, [])
+
+  const [ingredients, setIngredients] = React.useState<Ingredient[]>(() => getMappedIngredients(initialIngredients))
   const [searchQuery, setSearchQuery] = React.useState("")
   const [reasons, setReasons] = React.useState<Record<string, string>>({})
+  const [amounts, setAmounts] = React.useState<Record<string, string>>({})
+  const [isMutatingId, setIsMutatingId] = React.useState<string | null>(null)
 
-  const handleAdd = (id: string) => {
-    setIngredients(prev =>
-      prev.map(item => {
-        if (item.id === id) {
-          // Increment logic (packs/cans by 1, kg by 5, liters by 0.5)
-          const step = item.unit === "kg" ? 5 : item.unit === "liters" ? 0.5 : 1
-          return { ...item, stock: parseFloat((item.stock + step).toFixed(1)) }
-        }
-        return item
-      })
-    )
-  }
+  // Sync state if initialIngredients prop changes
+  React.useEffect(() => {
+    setIngredients(getMappedIngredients(initialIngredients))
+  }, [initialIngredients, getMappedIngredients])
 
-  const handleDeduct = (id: string) => {
-    setIngredients(prev =>
-      prev.map(item => {
-        if (item.id === id) {
-          const step = item.unit === "kg" ? 5 : item.unit === "liters" ? 0.5 : 1
-          const newStock = Math.max(0, item.stock - step)
-          return { ...item, stock: parseFloat(newStock.toFixed(1)) }
-        }
-        return item
-      })
-    )
+  const handleUpdate = async (id: string) => {
+    const item = ingredients.find(i => i.id === id)
+    if (!item) return
+
+    const amountStr = amounts[id]
+    if (!amountStr) return
+
+    const amount = parseFloat(amountStr)
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid positive amount.")
+      return
+    }
+
+    const reason = reasons[id] || "OUT"
+    let newStock = item.stock
+
+    if (reason === "IN") {
+      newStock += amount
+    } else {
+      newStock -= amount
+      if (newStock < 0) newStock = 0
+    }
+
+    const actualChanged = reason === "IN" ? amount : parseFloat((item.stock - newStock).toFixed(2))
+    if (actualChanged === 0 && reason !== "IN") return // nothing changed
+
+    setIsMutatingId(id)
+    try {
+      await mutateStockBalance(id, parseFloat(newStock.toFixed(2)), actualChanged, reason as any)
+      setIngredients(prev =>
+        prev.map(i => i.id === id ? { ...i, stock: parseFloat(newStock.toFixed(2)) } : i)
+      )
+      setAmounts(prev => ({ ...prev, [id]: "" }))
+    } catch (err) {
+      console.error("Failed to update stock:", err)
+      alert("Failed to update inventory in database.")
+    } finally {
+      setIsMutatingId(null)
+    }
   }
 
   const filteredIngredients = ingredients.filter(item =>
@@ -117,6 +169,8 @@ export default function BakeryIngredientList() {
         {filteredIngredients.length > 0 ? (
           filteredIngredients.map(item => {
             const isLow = item.stock <= item.minThreshold
+            const isMutating = isMutatingId === item.id
+
             return (
               <div
                 key={item.id}
@@ -162,15 +216,20 @@ export default function BakeryIngredientList() {
                 {/* Right Side: Quantity Displays & Big Touch Buttons */}
                 <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
                   {/* Current Stock Display */}
-                  <div className="flex flex-col text-left sm:text-right">
+                  <div className="flex flex-col text-left sm:text-right min-w-[80px]">
                     <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold leading-none">
                       Current Stock
                     </span>
                     <span className={cn(
-                      "text-lg font-extrabold mt-1 tracking-tight leading-none",
+                      "text-lg font-extrabold mt-1 tracking-tight leading-none flex items-center justify-start sm:justify-end gap-1.5",
                       isLow ? "text-amber-600 dark:text-amber-400" : "text-foreground"
                     )}>
-                      {item.stock} <span className="text-xs font-semibold text-muted-foreground">{item.unit}</span>
+                      {isMutating ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      ) : (
+                        item.stock
+                      )}
+                      <span className="text-xs font-semibold text-muted-foreground">{item.unit}</span>
                     </span>
                   </div>
 
@@ -180,30 +239,34 @@ export default function BakeryIngredientList() {
                     <select
                       value={reasons[item.id] || "OUT"}
                       onChange={(e) => setReasons(prev => ({ ...prev, [item.id]: e.target.value }))}
-                      className="h-12 min-h-[48px] rounded-xl border border-border/80 bg-background/50 px-2.5 text-xs font-bold text-foreground shadow-xs cursor-pointer focus:ring-1 focus:ring-ring focus:outline-hidden"
+                      disabled={isMutatingId !== null}
+                      className="h-12 min-h-[48px] rounded-xl border border-border/80 bg-background/50 px-2.5 text-xs font-bold text-foreground shadow-xs cursor-pointer focus:ring-1 focus:ring-ring focus:outline-hidden disabled:opacity-50"
                     >
                       <option value="IN">IN (Restock)</option>
                       <option value="OUT">OUT (Production)</option>
                       <option value="WASTE">WASTE (Spoilage)</option>
                     </select>
 
+                    <Input
+                      type="number"
+                      min="0"
+                      step={item.unit === "kg" ? "1" : item.unit === "liters" ? "0.1" : "1"}
+                      placeholder="Qty"
+                      value={amounts[item.id] || ""}
+                      onChange={(e) => setAmounts(prev => ({ ...prev, [item.id]: e.target.value }))}
+                      disabled={isMutatingId !== null}
+                      className="h-12 w-20 min-h-[48px] rounded-xl text-center font-bold"
+                    />
+
                     <Button
                       variant="outline"
                       size="lg"
-                      onClick={() => handleDeduct(item.id)}
-                      className="size-12 min-h-[48px] rounded-xl cursor-pointer hover:bg-destructive/10 hover:text-destructive border-border/70 hover:border-destructive/30 active:scale-95 transition-all flex items-center justify-center shrink-0"
-                      aria-label={`Deduct from ${item.name}`}
+                      onClick={() => handleUpdate(item.id)}
+                      disabled={isMutatingId !== null || !amounts[item.id]}
+                      className="size-12 min-h-[48px] rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary border-border/70 hover:border-primary/30 active:scale-95 transition-all flex items-center justify-center shrink-0 disabled:opacity-50"
+                      aria-label={`Update ${item.name}`}
                     >
-                      <Minus className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={() => handleAdd(item.id)}
-                      className="size-12 min-h-[48px] rounded-xl cursor-pointer hover:bg-emerald-500/10 hover:text-emerald-600 border-border/70 hover:border-emerald-500/30 active:scale-95 transition-all flex items-center justify-center shrink-0"
-                      aria-label={`Add to ${item.name}`}
-                    >
-                      <Plus className="h-5 w-5" />
+                      <Edit2 className="h-5 w-5" />
                     </Button>
                   </div>
                 </div>

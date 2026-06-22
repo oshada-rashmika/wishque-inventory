@@ -62,6 +62,7 @@ export async function mutateStockBalance(
   const { error: logError } = await supabase
     .from("stock_logs")
     .insert({
+      id: crypto.randomUUID(),
       item_id: itemId,
       quantity_changed: quantityChanged,
       type: type,
@@ -118,6 +119,16 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
   // Fetch logistics data server-side if user is Bakery Assistant Manager
   let stockLogs: any[] = []
   let inventoryItems: any[] = []
+  let bakeryIngredients: any[] = []
+
+  if (profile.department === "Bakery" && profile.role === "Head Chef") {
+    const { data: items } = await supabase
+      .from("inventory_items")
+      .select("id, name, unit, current_stock, minimum_threshold")
+      .eq("department", "Bakery")
+      .order("name", { ascending: true })
+    if (items) bakeryIngredients = items
+  }
 
   if (profile.department === "Bakery" && profile.role === "Assistant Manager") {
     // 1. Fetch bakery items
@@ -160,7 +171,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
       </div>
 
       {profile.department === "Bakery" && profile.role === "Head Chef" ? (
-        <BakeryIngredientList />
+        <BakeryIngredientList initialIngredients={bakeryIngredients} mutateStockBalance={mutateStockBalance} />
       ) : profile.department === "Bakery" && profile.role === "Assistant Manager" ? (
         <BakeryLogisticsDashboard
           inventoryItems={inventoryItems}
