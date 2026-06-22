@@ -45,3 +45,12 @@ ALTER TABLE public.product_recipes ENABLE ROW LEVEL SECURITY;
 -- Dynamic Policies matching user profile department metrics
 CREATE POLICY "Allow department matching view profiles" ON public.products
     FOR SELECT USING (auth.uid() IN (SELECT id FROM profiles WHERE department = products.department OR role = 'Admin'));
+
+CREATE POLICY "Allow department matching view recipes" ON public.product_recipes
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM public.products p
+            WHERE p.id = product_recipes.product_id
+              AND (auth.uid() IN (SELECT id FROM profiles WHERE department = p.department OR role = 'Admin'))
+        )
+    );

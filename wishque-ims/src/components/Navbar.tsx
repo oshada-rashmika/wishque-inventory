@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { logoutAction } from "@/app/actions/auth"
@@ -44,6 +44,7 @@ const getDepartmentStyles = (dept: string) => {
 
 export default function Navbar({ profile }: NavbarProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const [isLoggingOut, setIsLoggingOut] = React.useState(false)
 
   const handleSignOut = async () => {
@@ -58,29 +59,64 @@ export default function Navbar({ profile }: NavbarProps) {
   }
 
   const deptStyles = getDepartmentStyles(profile.department)
+  const normalizedDept = profile.department.trim().toLowerCase()
+  const showProductsLink = normalizedDept === "bakery" || normalizedDept === "floral"
+  const dashboardPath = `/dashboard/${profile.department.toLowerCase().replace(/\s+/g, "-")}`
+  
+  const isActiveDashboard = pathname === dashboardPath
+  const isActiveProducts = pathname === "/dashboard/products"
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
       <div className="w-full px-6 flex h-16 items-center justify-between">
-        {/* Brand/Logo Section */}
-        <Link 
-          href={`/dashboard/${profile.department.toLowerCase().replace(/\s+/g, "-")}`}
-          className="flex items-center gap-3 transition-opacity hover:opacity-90 active:scale-98"
-        >
-          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg overflow-hidden border border-border/50 bg-muted">
-            <Image
-              src="/logo.png"
-              alt="Wishque IMS Logo"
-              width={36}
-              height={36}
-              className="object-contain"
-              priority
-            />
-          </div>
-          <span className="font-bold text-base sm:text-lg tracking-tight bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent select-none font-sans">
-            Wishque IMS
-          </span>
-        </Link>
+        {/* Brand & Navigation */}
+        <div className="flex items-center gap-4 sm:gap-6">
+          <Link 
+            href={dashboardPath}
+            className="flex items-center gap-3 transition-opacity hover:opacity-90 active:scale-98"
+          >
+            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg overflow-hidden border border-border/50 bg-muted">
+              <Image
+                src="/logo.png"
+                alt="Wishque IMS Logo"
+                width={36}
+                height={36}
+                className="object-contain"
+                priority
+              />
+            </div>
+            <span className="font-bold text-base sm:text-lg tracking-tight bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent select-none font-sans">
+              Wishque IMS
+            </span>
+          </Link>
+
+          {showProductsLink && (
+            <nav className="flex items-center gap-1 border-l border-border/30 pl-4 ml-1">
+              <Link
+                href={dashboardPath}
+                className={cn(
+                  "px-2.5 py-1 text-xs font-semibold rounded-md transition-colors",
+                  isActiveDashboard 
+                    ? "bg-secondary text-foreground" 
+                    : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+                )}
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/dashboard/products"
+                className={cn(
+                  "px-2.5 py-1 text-xs font-semibold rounded-md transition-colors",
+                  isActiveProducts 
+                    ? "bg-secondary text-foreground" 
+                    : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+                )}
+              >
+                Products
+              </Link>
+            </nav>
+          )}
+        </div>
 
         {/* User Details & Actions Section */}
         <div className="flex items-center gap-3 sm:gap-4">
