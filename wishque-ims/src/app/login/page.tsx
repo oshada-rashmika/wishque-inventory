@@ -8,15 +8,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { supabase } from "@/lib/supabase"
 import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react"
+import { loginAction } from "@/app/actions/auth"
 
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [showPassword, setShowPassword] = React.useState(false)
-  const [isLoading, setIsLoading] = React.useState(false)
+  const [isPending, startTransition] = React.useTransition()
   const [errors, setErrors] = React.useState<{ email?: string; password?: string }>({})
   const [authError, setAuthError] = React.useState<string | null>(null)
 
@@ -36,41 +36,32 @@ export default function LoginPage() {
     return Object.keys(tempErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setAuthError(null)
     if (!validateForm()) return
 
-    setIsLoading(true)
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+    const formData = new FormData(e.currentTarget)
 
-      if (error) {
-        setAuthError(error.message)
-      } else {
-        router.push("/")
-        router.refresh()
+    startTransition(async () => {
+      const result = await loginAction(null, formData)
+      
+      if (result?.error) {
+        setAuthError(result.error)
+      } else if (result?.success && result?.department) {
+        router.push(`/dashboard/${result.department}`)
       }
-    } catch (err: any) {
-      setAuthError(err.message || "An unexpected error occurred. Please try again.")
-    } finally {
-      setIsLoading(false)
-    }
+    })
   }
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8 overflow-hidden select-none">
-      {/* Dynamic light/glowing background design */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-40 dark:opacity-20">
         <div className="absolute -top-[40%] -left-[20%] w-[80%] h-[80%] rounded-full bg-radial from-primary/30 to-transparent blur-3xl" />
         <div className="absolute -bottom-[40%] -right-[20%] w-[80%] h-[80%] rounded-full bg-radial from-primary/20 to-transparent blur-3xl" />
       </div>
 
       <div className="relative z-10 w-full max-w-[420px]">
-        {/* Logo/Branding Header */}
         <div className="flex flex-col items-center mb-8 text-center">
           <Image
             src="/logo.png"
@@ -93,12 +84,12 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent className="grid gap-5">
-            {/* Login Form */}
             <form onSubmit={handleSubmit} className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="name@example.com"
                   autoComplete="email"
@@ -109,7 +100,7 @@ export default function LoginPage() {
                     if (authError) setAuthError(null)
                   }}
                   aria-invalid={!!errors.email}
-                  disabled={isLoading}
+                  disabled={isPending}
                   className="bg-background/50 focus:bg-background transition-all"
                 />
                 {errors.email && (
@@ -132,6 +123,7 @@ export default function LoginPage() {
                 <div className="relative">
                   <Input
                     id="password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     autoComplete="current-password"
@@ -142,13 +134,13 @@ export default function LoginPage() {
                       if (authError) setAuthError(null)
                     }}
                     aria-invalid={!!errors.password}
-                    disabled={isLoading}
+                    disabled={isPending}
                     className="pr-10 bg-background/50 focus:bg-background transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    disabled={isLoading}
+                    disabled={isPending}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -161,13 +153,13 @@ export default function LoginPage() {
                 )}
               </div>
 
-              {/* Remember Me */}
               <div className="flex items-center space-x-2 my-1">
                 <input
                   type="checkbox"
                   id="remember"
+                  name="remember"
                   className="h-4 w-4 rounded border-input text-primary bg-background focus:ring-ring cursor-pointer accent-primary"
-                  disabled={isLoading}
+                  disabled={isPending}
                 />
                 <label
                   htmlFor="remember"
@@ -177,7 +169,6 @@ export default function LoginPage() {
                 </label>
               </div>
 
-              {/* Custom Modern UI Alert Error Banner placed secure output beneath form fields */}
               {authError && (
                 <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive transition-all animate-in fade-in-0 slide-in-from-top-2 duration-300">
                   <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
@@ -188,8 +179,8 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <Button type="submit" disabled={isLoading} className="w-full mt-2 cursor-pointer relative h-9">
-                {isLoading ? (
+              <Button type="submit" disabled={isPending} className="w-full mt-2 cursor-pointer relative h-9">
+                {isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Signing in...
