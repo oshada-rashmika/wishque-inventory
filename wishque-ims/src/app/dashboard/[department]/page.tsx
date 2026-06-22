@@ -2,6 +2,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import BakeryIngredientList from "@/components/BakeryIngredientList"
 
 export default async function DashboardPage({ params }: { params: Promise<{ department: string }> }) {
   const resolvedParams = await params
@@ -53,61 +54,43 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {profile.department === "Bakery" && profile.role === "Head Chef" && (
-          <>
-            <Card>
-              <CardHeader>
-                <CardTitle>Bakery Production Queue</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Manage active baking orders and timelines.</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Recipe Controls</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Adjust measurements and ingredients securely.</p>
-              </CardContent>
-            </Card>
-          </>
-        )}
+      {profile.department === "Bakery" && profile.role === "Head Chef" ? (
+        <BakeryIngredientList />
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {profile.department === "HR" && profile.role === "Assistant Manager" && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Staff Attendance</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">Review daily logs and leave requests.</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Rosters</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">Manage shift allocations and schedules.</p>
+                </CardContent>
+              </Card>
+            </>
+          )}
 
-        {profile.department === "HR" && profile.role === "Assistant Manager" && (
-          <>
+          {!(profile.department === "HR" && profile.role === "Assistant Manager") && (
             <Card>
               <CardHeader>
-                <CardTitle>Staff Attendance</CardTitle>
+                <CardTitle>General Overview</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">Review daily logs and leave requests.</p>
+                <p className="text-sm text-muted-foreground">Standard operational metrics and alerts.</p>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Rosters</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Manage shift allocations and schedules.</p>
-              </CardContent>
-            </Card>
-          </>
-        )}
-
-        {!(profile.department === "Bakery" && profile.role === "Head Chef") &&
-         !(profile.department === "HR" && profile.role === "Assistant Manager") && (
-          <Card>
-            <CardHeader>
-              <CardTitle>General Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Standard operational metrics and alerts.</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
