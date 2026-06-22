@@ -2,9 +2,10 @@
 
 import * as React from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { supabase } from "@/lib/supabase"
@@ -60,27 +61,6 @@ export default function LoginPage() {
     }
   }
 
-  const handleSocialLogin = async (provider: "google" | "github") => {
-    setAuthError(null)
-    setIsLoading(true)
-    try {
-      const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${origin}/auth/callback`,
-        },
-      })
-      if (error) {
-        setAuthError(error.message)
-        setIsLoading(false)
-      }
-    } catch (err: any) {
-      setAuthError(err.message || `An error occurred signing in with ${provider}.`)
-      setIsLoading(false)
-    }
-  }
-
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8 overflow-hidden select-none">
       {/* Dynamic light/glowing background design */}
@@ -92,16 +72,14 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-[420px]">
         {/* Logo/Branding Header */}
         <div className="flex flex-col items-center mb-8 text-center">
-          <div className="h-11 w-11 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 mb-3 text-primary-foreground font-bold text-lg select-none">
-            {/* Minimalist SVG Logo representing Box/Inventory */}
-            <svg
-              className="h-6 w-6 stroke-current stroke-2 fill-none"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-          </div>
+          <Image
+            src="/logo.png"
+            alt="Wishque Logo"
+            width={56}
+            height={56}
+            className="h-14 w-auto object-contain mb-3"
+            priority
+          />
           <h2 className="text-2xl font-bold tracking-tight text-foreground font-sans">Wishque IMS</h2>
           <p className="text-sm text-muted-foreground mt-1">Inventory Management System</p>
         </div>
@@ -115,57 +93,6 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent className="grid gap-5">
-            {/* Custom Modern UI Alert Error Banner */}
-            {authError && (
-              <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive transition-all animate-in fade-in-0 slide-in-from-top-2 duration-300">
-                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <h5 className="font-semibold leading-none tracking-tight mb-1">Sign-in failed</h5>
-                  <p className="text-xs opacity-90 leading-relaxed">{authError}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Social Logins */}
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                className="w-full flex items-center justify-center gap-2 hover:bg-muted/80 cursor-pointer h-9 px-3 text-sm border-border/80"
-                onClick={() => handleSocialLogin("google")}
-                disabled={isLoading}
-              >
-                {/* Google SVG Logo */}
-                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
-                  <path
-                    fill="#EA4335"
-                    d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.51 0-6.357-2.89-6.357-6.457 0-3.567 2.848-6.458 6.357-6.458 1.614 0 3.08.6 4.218 1.583l3.055-3.055C18.91 1.777 15.82 0 12.24 0 5.48 0 0 5.48 0 12.24s5.48 12.24 12.24 12.24c7.63 0 11.238-5.38 11.238-11.24 0-.7-.06-1.396-.188-1.955H12.24z"
-                  />
-                </svg>
-                Google
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full flex items-center justify-center gap-2 hover:bg-muted/80 cursor-pointer h-9 px-3 text-sm border-border/80"
-                onClick={() => handleSocialLogin("github")}
-                disabled={isLoading}
-              >
-                {/* GitHub SVG Logo */}
-                <svg className="h-4 w-4 fill-current shrink-0" viewBox="0 0 24 24">
-                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.11.82-.26.82-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.93 0-1.31.469-2.38 1.236-3.22-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.29-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.22 0 4.61-2.807 5.62-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.22.694.825.576C20.566 21.797 24 17.3 24 12c0-6.63-5.37-12-12-12z" />
-                </svg>
-                GitHub
-              </Button>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border/80" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2.5 text-muted-foreground">Or continue with email</span>
-              </div>
-            </div>
-
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="grid gap-4">
               <div className="grid gap-2">
@@ -250,6 +177,17 @@ export default function LoginPage() {
                 </label>
               </div>
 
+              {/* Custom Modern UI Alert Error Banner placed secure output beneath form fields */}
+              {authError && (
+                <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive transition-all animate-in fade-in-0 slide-in-from-top-2 duration-300">
+                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h5 className="font-semibold leading-none tracking-tight mb-1">Sign-in failed</h5>
+                    <p className="text-xs opacity-90 leading-relaxed">{authError}</p>
+                  </div>
+                </div>
+              )}
+
               <Button type="submit" disabled={isLoading} className="w-full mt-2 cursor-pointer relative h-9">
                 {isLoading ? (
                   <>
@@ -262,18 +200,8 @@ export default function LoginPage() {
               </Button>
             </form>
           </CardContent>
-
-          <CardFooter className="flex flex-col gap-2 border-t bg-muted/30 py-4">
-            <div className="text-center text-xs text-muted-foreground">
-              Don&apos;t have an account?{" "}
-              <Link href="/signup" className="font-medium text-foreground hover:text-primary transition-colors underline-offset-4 hover:underline">
-                Create an account
-              </Link>
-            </div>
-          </CardFooter>
         </Card>
       </div>
     </div>
   )
 }
-
