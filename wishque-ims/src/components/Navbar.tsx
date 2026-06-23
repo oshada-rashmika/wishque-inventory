@@ -40,6 +40,7 @@ const getDepartmentStyles = (dept: string) => {
       return "bg-blue-500/10 text-blue-700 border border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/30"
     case "product development":
     case "product-development":
+    case "production":
       return "bg-purple-500/10 text-purple-700 border border-purple-500/20 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/30"
     case "bakery":
       return "bg-amber-500/10 text-amber-700 border border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30"
@@ -86,17 +87,19 @@ export default function Navbar({ profile }: NavbarProps) {
 
   const deptStyles = getDepartmentStyles(profile.department)
   const normalizedDept = profile.department.trim().toLowerCase()
-  const isAssistantManager = profile.role.includes("Assistant Manager")
+  const isAssistantManager = profile.role.includes("Assistant Manager") || profile.role === "Production Manager"
   const dashboardPath = `/dashboard/${normalizedDept.replace(/\s+/g, "-")}`
   
   const isActiveDashboard = pathname === dashboardPath
   const isActiveProducts = pathname === "/dashboard/products"
   const isActiveInventory = pathname === `${dashboardPath}/inventory`
 
+  const showProducts = !["Store", "Stores", "Stationery"].includes(profile.department)
+
   const navLinks = [
     { href: dashboardPath, label: "Dashboard", active: isActiveDashboard },
     ...(isAssistantManager ? [{ href: `${dashboardPath}/inventory`, label: "Inventory", active: isActiveInventory }] : []),
-    { href: "/dashboard/products", label: "Products", active: isActiveProducts },
+    ...(showProducts ? [{ href: "/dashboard/products", label: "Products", active: isActiveProducts }] : []),
   ]
 
   return (

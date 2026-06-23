@@ -39,11 +39,19 @@ export default async function ProductsPage() {
     redirect("/login")
   }
 
-  // Fetch products under the current user's department
-  const { data: products, error: productsError } = await supabase
-    .from("products")
-    .select("id, name, category, department, price")
-    .eq("department", profile.department)
+  if (["Store", "Stores", "Stationery"].includes(profile.department)) {
+    redirect(`/dashboard/${profile.department.toLowerCase().replace(/\s+/g, "-")}`)
+  }
+
+  let query = supabase.from("products").select("id, name, category, department, price")
+  
+  if (profile.department === "Production") {
+    query = query.in("department", ["Bakery", "Floral"])
+  } else {
+    query = query.eq("department", profile.department)
+  }
+
+  const { data: products, error: productsError } = await query
 
   if (productsError) {
     console.error("Error fetching products:", productsError.message)
@@ -64,7 +72,7 @@ export default async function ProductsPage() {
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-sans">Products List</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Managing recipes and items for <span className="font-semibold text-foreground">{profile.department}</span>
+              Managing recipes and items for <span className="font-semibold text-foreground">{profile.department === "Production" ? "Bakery & Floral" : profile.department}</span>
             </p>
           </div>
         </div>
@@ -80,7 +88,7 @@ export default async function ProductsPage() {
 
       {/* Main Interactive Products List Component */}
       {products && products.length > 0 ? (
-        <ProductsList initialProducts={products as any[]} token={token!} />
+        <ProductsList initialProducts={products as any[]} token={token!} userRole={profile.role} />
       ) : (
         <div className="text-center py-12 border border-dashed border-border/60 rounded-xl bg-card/20 flex flex-col items-center justify-center">
           <Database className="h-8 w-8 text-muted-foreground/60 mb-2" />

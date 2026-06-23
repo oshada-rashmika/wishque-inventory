@@ -11,6 +11,7 @@ import BakeryLogisticsDashboard from "@/components/BakeryLogisticsDashboard"
 import FloralIngredientList from "@/components/FloralIngredientList"
 import FloralLogisticsDashboard from "@/components/FloralLogisticsDashboard"
 import StoreLogisticsDashboard from "@/components/StoreLogisticsDashboard"
+import ProductionLogisticsDashboard from "@/components/ProductionLogisticsDashboard"
 
 export async function mutateStockBalance(
   itemId: string,
@@ -146,14 +147,19 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
   }
 
   let consumptionCost = 0
-  if (profile.role.includes("Assistant Manager") && ["Bakery", "Floral", "Stores", "Stationery"].includes(profile.department)) {
+  if ((profile.role.includes("Assistant Manager") || profile.role === "Production Manager") && ["Bakery", "Floral", "Stores", "Stationery", "Production"].includes(profile.department)) {
     const now = new Date()
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-    const { data: shipments } = await supabase
-      .from("shipments")
-      .select("price")
-      .eq("department", profile.department)
-      .gte("created_at", firstDayOfMonth)
+    
+    let query = supabase.from("shipments").select("price").gte("created_at", firstDayOfMonth)
+    
+    if (profile.department === "Production") {
+      query = query.in("department", ["Bakery", "Floral"])
+    } else {
+      query = query.eq("department", profile.department)
+    }
+
+    const { data: shipments } = await query
       
     if (shipments && shipments.length > 0) {
       consumptionCost = shipments.reduce((sum, s) => sum + Number(s.price || 0), 0)
@@ -174,13 +180,20 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
     if (items) bakeryIngredients = items
   }
 
-  if (["Bakery", "Floral", "Store", "Stores"].includes(profile.department) && profile.role.includes("Assistant Manager")) {
+  if (["Bakery", "Floral", "Store", "Stores", "Production"].includes(profile.department) && (profile.role.includes("Assistant Manager") || profile.role === "Production Manager")) {
     // 1. Fetch items
-    const { data: items } = await supabase
+    let itemsQuery = supabase
       .from("inventory_items")
       .select("id, name, unit, current_stock, minimum_threshold, department, unit_price, consumption")
-      .eq("department", profile.department)
       .order("name", { ascending: true })
+
+    if (profile.department === "Production") {
+      itemsQuery = itemsQuery.in("department", ["Bakery", "Floral"])
+    } else {
+      itemsQuery = itemsQuery.eq("department", profile.department)
+    }
+
+    const { data: items } = await itemsQuery
 
     if (items) inventoryItems = items
 
@@ -192,6 +205,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
         quantity_changed,
         type,
         created_at,
+        department,
         inventory_items:item_id (
           name,
           unit
@@ -204,8 +218,12 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
       .order("created_at", { ascending: false })
       .limit(1000)
 
-    if (["Floral", "Store", "Stores"].includes(profile.department)) {
-      logsQuery = logsQuery.eq("department", profile.department)
+    if (["Floral", "Store", "Stores", "Production"].includes(profile.department)) {
+      if (profile.department === "Production") {
+        logsQuery = logsQuery.in("department", ["Bakery", "Floral"])
+      } else {
+        logsQuery = logsQuery.eq("department", profile.department)
+      }
     }
 
     const { data: logs } = await logsQuery
@@ -213,7 +231,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
     if (logs) stockLogs = logs
   }
 
-  const isAsstManager = ["Bakery", "Floral", "Store", "Stores"].includes(profile.department) && profile.role.includes("Assistant Manager")
+  const isAsstManager = ["Bakery", "Floral", "Store", "Stores", "Production"].includes(profile.department) && (profile.role.includes("Assistant Manager") || profile.role === "Production Manager")
   const lowStockItems = isAsstManager ? inventoryItems.filter((item: any) => item.current_stock <= item.minimum_threshold) : []
 
   return (
@@ -261,6 +279,13 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
           token={token}
           userId={profile.id}
         />
+      ) : profile.department === "Production" && (profile.role.includes("Assistant Manager") || profile.role === "Production Manager") ? (
+        <ProductionLogisticsDashboard
+          inventoryItems={inventoryItems}
+          initialLogs={stockLogs}
+          token={token}
+          userId={profile.id}
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {profile.department === "HR" && profile.role.includes("Assistant Manager") && (
@@ -297,7 +322,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
         </div>
       )}
 
-      {profile.role.includes("Assistant Manager") && ["Bakery", "Floral", "Stores", "Stationery"].includes(profile.department) && (
+      {(profile.role.includes("Assistant Manager") || profile.role === "Production Manager") && ["Bakery", "Floral", "Stores", "Stationery", "Production"].includes(profile.department) && (
         <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50 backdrop-blur-xl rounded-2xl sm:rounded-3xl overflow-hidden mt-4 sm:mt-6 relative">
           <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
             <DollarSign className="w-32 h-32" />

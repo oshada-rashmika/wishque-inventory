@@ -33,6 +33,7 @@ interface Product {
 interface ProductsListProps {
   initialProducts: Product[]
   token: string
+  userRole?: string
 }
 
 function SimpleBadge({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -46,7 +47,7 @@ function SimpleBadge({ children, className }: { children: React.ReactNode; class
   )
 }
 
-export default function ProductsList({ initialProducts, token }: ProductsListProps) {
+export default function ProductsList({ initialProducts, token, userRole }: ProductsListProps) {
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null)
   const [recipes, setRecipes] = React.useState<ProductRecipe[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
@@ -111,10 +112,12 @@ export default function ProductsList({ initialProducts, token }: ProductsListPro
                   <SimpleBadge className="bg-secondary text-secondary-foreground text-[10px] tracking-wide uppercase border-transparent">
                     {product.category}
                   </SimpleBadge>
-                  <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
-                    <Coins className="h-4 w-4 text-emerald-500/80" />
-                    <span>LKR {parseFloat(product.price as any).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                  </div>
+                  {!userRole?.toLowerCase().includes("chef") && (
+                    <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
+                      <Coins className="h-4 w-4 text-emerald-500/80" />
+                      <span>LKR {parseFloat(product.price as any).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  )}
                 </div>
                 <h3 className="text-base sm:text-lg font-bold tracking-tight text-foreground mt-1 group-hover:text-primary transition-colors">
                   {product.name}
@@ -143,7 +146,7 @@ export default function ProductsList({ initialProducts, token }: ProductsListPro
               <SimpleBadge className="bg-secondary text-secondary-foreground text-[9px] tracking-wide uppercase border-transparent">
                 {selectedProduct?.category}
               </SimpleBadge>
-              {selectedProduct && (
+              {selectedProduct && !userRole?.toLowerCase().includes("chef") && (
                 <div className="text-emerald-600 dark:text-emerald-400 font-bold text-xs">
                   LKR {parseFloat(selectedProduct.price as any).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </div>

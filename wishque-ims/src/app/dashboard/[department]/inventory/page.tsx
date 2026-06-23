@@ -5,6 +5,7 @@ import { PackageOpen } from "lucide-react"
 import FloralIngredientList from "@/components/FloralIngredientList"
 import StoreItemsList from "@/components/StoreItemsList"
 import BakeryInventoryGrid from "@/components/BakeryInventoryGrid"
+import ProductionInventoryDashboard from "@/components/ProductionInventoryDashboard"
 import { mutateStockBalance } from "../page"
 
 export default async function InventoryPage({ params }: { params: Promise<{ department: string }> }) {
@@ -40,16 +41,20 @@ export default async function InventoryPage({ params }: { params: Promise<{ depa
     redirect("/login")
   }
 
-  // Only allow Assistant Manager: Bakery, Floral, or Store
-  if (!(["Bakery", "Floral", "Store", "Stores"].includes(profile.department) && profile.role.includes("Assistant Manager"))) {
+  // Only allow Assistant Manager: Bakery, Floral, Store, or Production
+  if (!(["Bakery", "Floral", "Store", "Stores", "Production"].includes(profile.department) && (profile.role.includes("Assistant Manager") || profile.role === "Production Manager"))) {
     redirect(`/dashboard/${departmentParam}`)
   }
 
-  const { data: inventoryItems } = await supabase
-    .from("inventory_items")
-    .select("id, name, unit, current_stock, minimum_threshold, department, unit_price, consumption")
-    .eq("department", profile.department)
-    .order("name", { ascending: true })
+  let query = supabase.from("inventory_items").select("id, name, unit, current_stock, minimum_threshold, department, unit_price, consumption").order("name", { ascending: true })
+
+  if (profile.department === "Production") {
+    query = query.in("department", ["Bakery", "Floral"])
+  } else {
+    query = query.eq("department", profile.department)
+  }
+
+  const { data: inventoryItems } = await query
 
   if (!inventoryItems) return null
 
@@ -92,6 +97,15 @@ export default async function InventoryPage({ params }: { params: Promise<{ depa
           <StoreItemsList initialIngredients={inventoryItems} mutateStockBalance={mutateStockBalance} />
         </div>
       </div>
+    )
+  }
+
+  if (profile.department === "Production") {
+    return (
+      <ProductionInventoryDashboard 
+        inventoryItems={inventoryItems} 
+        mutateStockBalance={mutateStockBalance} 
+      />
     )
   }
 
