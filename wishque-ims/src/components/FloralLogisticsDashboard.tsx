@@ -15,6 +15,7 @@ interface InventoryItem {
   name: string
   unit: string
   current_stock: number
+  unit_price: number
 }
 
 interface StockLog {
@@ -56,6 +57,20 @@ export default function FloralLogisticsDashboard({
   const [timeFilter, setTimeFilter] = React.useState<"all" | "last_week" | "last_month" | "custom_date">("all")
   const [customDate, setCustomDate] = React.useState<string>("")
 
+  const selectedItem = React.useMemo(() => {
+    return inventoryItems.find(item => item.id === selectedItemId)
+  }, [inventoryItems, selectedItemId])
+
+  React.useEffect(() => {
+    const qtyVal = parseFloat(quantity)
+    if (!isNaN(qtyVal) && qtyVal > 0 && selectedItem?.unit_price) {
+      const computedPrice = (qtyVal * selectedItem.unit_price).toFixed(2)
+      setPrice(computedPrice)
+    } else {
+      setPrice("")
+    }
+  }, [quantity, selectedItem])
+
   React.useEffect(() => {
     if (successMsg || errorMsg) {
       const timer = setTimeout(() => {
@@ -91,7 +106,7 @@ export default function FloralLogisticsDashboard({
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  
+
   const clientSupabase = React.useMemo(() => {
     return createClient(supabaseUrl, supabaseKey, {
       global: { headers: { Authorization: `Bearer ${token}` } }
@@ -184,7 +199,7 @@ export default function FloralLogisticsDashboard({
       setQuantity("")
       setPrice("")
       setSuccessMsg(`Registered shipment of ${parsedQty} ${selectedItem.unit} of ${selectedItem.name} successfully.`)
-      
+
       router.refresh()
     } catch (err: any) {
       console.error("Error registering shipment:", err)
@@ -253,13 +268,11 @@ export default function FloralLogisticsDashboard({
               <div className="relative">
                 <Input
                   id="price"
-                  type="number"
-                  step="any"
-                  placeholder="e.g. 5000"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  disabled={isSubmitting}
-                  className="pr-16 h-11 rounded-xl border-input/50 bg-background/80 hover:bg-background focus:bg-background transition-all focus-visible:ring-2 focus-visible:ring-primary/40"
+                  type="text"
+                  placeholder="0.00"
+                  value={price ? `LKR ${parseFloat(price).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : ""}
+                  disabled={true}
+                  className="pr-16 h-11 rounded-xl border-input/50 bg-muted/65 text-muted-foreground transition-all cursor-not-allowed select-none font-bold"
                   required
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground pointer-events-none select-none">
