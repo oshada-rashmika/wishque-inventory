@@ -387,9 +387,9 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
                     </div>
 
                     {/* Consumption (Last 30 Days) card */}
-                    <div className="p-3 bg-red-500/5 rounded-xl border border-red-500/10 col-span-2">
-                      <div className="text-[10px] uppercase font-bold text-red-600 dark:text-red-400 tracking-wider flex items-center gap-1.5">
-                        <AlertTriangle className="h-3.5 w-3.5 opacity-80" />
+                    <div className="p-3 bg-amber-500/5 rounded-xl border border-amber-500/10 col-span-2">
+                      <div className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider flex items-center gap-1.5">
+                        <ShieldAlert className="h-3.5 w-3.5 opacity-80" />
                         Consumption (Last 30 Days)
                       </div>
                       <div className="text-lg font-extrabold text-foreground mt-1 flex items-baseline gap-1">
@@ -401,8 +401,8 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
 
                   {/* Warnings if Low Stock */}
                   {activeSelectedItem && activeSelectedItem.stock <= activeSelectedItem.minThreshold && (
-                    <div className="flex items-center gap-2.5 p-3 mt-4 rounded-xl border border-amber-500/20 bg-amber-500/10 text-xs font-semibold text-amber-700 dark:text-amber-400">
-                      <ShieldAlert className="h-4 w-4 shrink-0 animate-bounce" />
+                    <div className="flex items-center gap-2.5 p-3 mt-4 rounded-xl border border-red-500/20 bg-red-500/10 text-xs font-semibold text-red-700 dark:text-red-400">
+                      <AlertTriangle className="h-4 w-4 shrink-0 animate-bounce" />
                       <span>Attention: This item is below safety levels. Restock required.</span>
                     </div>
                   )}
