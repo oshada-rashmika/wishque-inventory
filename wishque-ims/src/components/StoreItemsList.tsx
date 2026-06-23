@@ -271,9 +271,8 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
                       disabled={isMutatingId !== null}
                       className="h-10 sm:h-12 min-h-[40px] sm:min-h-[48px] rounded-xl border border-border/80 bg-background/50 px-2 sm:px-2.5 text-[11px] sm:text-xs font-bold text-foreground shadow-xs cursor-pointer focus:ring-1 focus:ring-ring focus:outline-hidden disabled:opacity-50"
                     >
-                      <option value="IN">IN (Restock)</option>
-                      <option value="OUT">OUT (Production)</option>
-                      <option value="WASTE">WASTE (Spoilage)</option>
+                      <option value="IN">Restock</option>
+                      <option value="OUT">Used</option>
                     </select>
 
                     <Input

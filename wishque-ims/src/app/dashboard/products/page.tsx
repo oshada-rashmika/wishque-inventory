@@ -39,6 +39,10 @@ export default async function ProductsPage() {
     redirect("/login")
   }
 
+  if (["Store", "Stores", "Stationery"].includes(profile.department)) {
+    redirect(`/dashboard/${profile.department.toLowerCase().replace(/\s+/g, "-")}`)
+  }
+
   // Fetch products under the current user's department
   const { data: products, error: productsError } = await supabase
     .from("products")

@@ -93,10 +93,12 @@ export default function Navbar({ profile }: NavbarProps) {
   const isActiveProducts = pathname === "/dashboard/products"
   const isActiveInventory = pathname === `${dashboardPath}/inventory`
 
+  const showProducts = !["Store", "Stores", "Stationery"].includes(profile.department)
+
   const navLinks = [
     { href: dashboardPath, label: "Dashboard", active: isActiveDashboard },
     ...(isAssistantManager ? [{ href: `${dashboardPath}/inventory`, label: "Inventory", active: isActiveInventory }] : []),
-    { href: "/dashboard/products", label: "Products", active: isActiveProducts },
+    ...(showProducts ? [{ href: "/dashboard/products", label: "Products", active: isActiveProducts }] : []),
   ]
 
   return (
