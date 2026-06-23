@@ -121,30 +121,39 @@ export default function FloralIngredientList({ initialIngredients, mutateStockBa
     <div className="space-y-6">
       {/* Metrics Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-card/45 backdrop-blur-md shadow-xs">
+        {/* Total Items (Pastel Blue) */}
+        <div className="flex items-center justify-between p-4 rounded-xl border border-blue-500/20 bg-blue-500/10 backdrop-blur-md shadow-xs">
           <div className="space-y-1">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Items</span>
-            <p className="text-2xl font-bold">{ingredients.length}</p>
+            <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Total Items</span>
+            <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{ingredients.length}</p>
           </div>
-          <Package className="h-8 w-8 text-primary/60" />
+          <div className="p-2 bg-blue-500/20 rounded-lg shrink-0">
+            <Package className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          </div>
         </div>
 
-        <div className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-card/45 backdrop-blur-md shadow-xs">
+        {/* Low Stock Alerts (Pastel Yellow/Amber) */}
+        <div className="flex items-center justify-between p-4 rounded-xl border border-amber-500/30 bg-amber-500/15 backdrop-blur-md shadow-xs">
           <div className="space-y-1">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Low Stock Alerts</span>
-            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{lowStockCount}</p>
+            <span className="text-xs font-semibold text-amber-700 dark:text-amber-500 uppercase tracking-wider">Low Stock Alerts</span>
+            <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{lowStockCount}</p>
           </div>
-          <AlertTriangle className={cn("h-8 w-8", lowStockCount > 0 ? "text-amber-500 animate-pulse" : "text-muted-foreground/45")} />
+          <div className={cn("p-2 rounded-lg shrink-0", lowStockCount > 0 ? "bg-amber-500/20" : "bg-amber-500/10")}>
+            <AlertTriangle className={cn("h-6 w-6", lowStockCount > 0 ? "text-amber-600 dark:text-amber-500 animate-pulse" : "text-amber-500/60")} />
+          </div>
         </div>
 
-        <div className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-card/45 backdrop-blur-md shadow-xs">
+        {/* Status Checklist (Pastel Green) */}
+        <div className="flex items-center justify-between p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/15 backdrop-blur-md shadow-xs">
           <div className="space-y-1">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status Checklist</span>
-            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-500 uppercase tracking-wider">Status Checklist</span>
+            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
               {lowStockCount === 0 ? "Perfect" : `${ingredients.length - lowStockCount} Good`}
             </p>
           </div>
-          <CheckCircle className="h-8 w-8 text-emerald-500" />
+          <div className="p-2 bg-emerald-500/20 rounded-lg shrink-0">
+            <CheckCircle className="h-6 w-6 text-emerald-600 dark:text-emerald-500" />
+          </div>
         </div>
       </div>
 
@@ -177,7 +186,7 @@ export default function FloralIngredientList({ initialIngredients, mutateStockBa
                 className={cn(
                   "flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-all duration-300 gap-4",
                   isLow 
-                    ? "border-amber-500/20 bg-amber-500/[0.02] hover:bg-amber-500/[0.04] hover:border-amber-500/40" 
+                    ? "border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/15 hover:border-amber-500/70 shadow-[0_0_15px_rgba(245,158,11,0.1)] relative overflow-hidden" 
                     : "border-border/60 bg-card/50 hover:bg-accent/15 hover:border-border/95"
                 )}
               >
