@@ -47,7 +47,7 @@ export default async function InventoryPage({ params }: { params: Promise<{ depa
 
   const { data: inventoryItems } = await supabase
     .from("inventory_items")
-    .select("id, name, unit, current_stock, minimum_threshold, department, unit_price")
+    .select("id, name, unit, current_stock, minimum_threshold, department, unit_price, consumption")
     .eq("department", profile.department)
     .order("name", { ascending: true })
 

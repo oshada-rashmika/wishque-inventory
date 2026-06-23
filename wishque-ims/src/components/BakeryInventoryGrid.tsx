@@ -15,6 +15,7 @@ interface InventoryItem {
   minimum_threshold: number
   department: string
   unit_price: number
+  consumption?: number
 }
 
 interface BakeryInventoryGridProps {
@@ -160,6 +161,18 @@ export default function BakeryInventoryGrid({ inventoryItems }: BakeryInventoryG
                       {selectedItem?.minimum_threshold} {selectedItem?.unit}
                     </span>
                   </div>
+                </div>
+              </div>
+
+              {/* Consumption (Last 30 Days) card */}
+              <div className="p-3 bg-red-500/5 rounded-xl border border-red-500/10 col-span-2">
+                <div className="text-[10px] uppercase font-bold text-red-600 dark:text-red-400 tracking-wider flex items-center gap-1.5">
+                  <AlertTriangle className="h-3.5 w-3.5 opacity-80" />
+                  Consumption (Last 30 Days)
+                </div>
+                <div className="text-lg font-extrabold text-foreground mt-1 flex items-baseline gap-1">
+                  <span>{selectedItem?.consumption || 0}</span>
+                  <span className="text-xs font-semibold text-muted-foreground">{selectedItem?.unit}</span>
                 </div>
               </div>
             </div>

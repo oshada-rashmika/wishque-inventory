@@ -17,6 +17,7 @@ interface Ingredient {
   minThreshold: number
   department: string
   unitPrice: number
+  consumption: number
 }
 
 interface DatabaseIngredient {
@@ -27,6 +28,7 @@ interface DatabaseIngredient {
   minimum_threshold: number
   department?: string
   unit_price?: number
+  consumption?: number
 }
 
 interface StoreItemsListProps {
@@ -61,6 +63,7 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
       minThreshold: item.minimum_threshold,
       department: item.department || "Stores",
       unitPrice: item.unit_price || 0,
+      consumption: item.consumption || 0,
       image: IMAGE_MAP[item.name] || "https://images.unsplash.com/photo-1470790376778-a9fbc86d70e2?w=120&h=120&fit=crop"
     }))
   }, [])
@@ -106,7 +109,11 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
     try {
       await mutateStockBalance(id, parseFloat(newStock.toFixed(2)), actualChanged, reason as any, "Store")
       setIngredients(prev =>
-        prev.map(i => i.id === id ? { ...i, stock: parseFloat(newStock.toFixed(2)) } : i)
+        prev.map(i => i.id === id ? { 
+          ...i, 
+          stock: parseFloat(newStock.toFixed(2)),
+          consumption: reason === "OUT" ? i.consumption + actualChanged : i.consumption
+        } : i)
       )
       setAmounts(prev => ({ ...prev, [id]: "" }))
     } catch (err) {
@@ -329,60 +336,79 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
           </DialogHeader>
 
           <div className="py-4 space-y-4">
-            {/* Grid details */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 bg-secondary/35 rounded-xl border border-border/45">
-                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1.5">
-                  <Tag className="h-3.5 w-3.5 opacity-60" />
-                  Department
-                </div>
-                <div className="text-sm font-extrabold text-foreground mt-1.5 capitalize">
-                  {selectedItem?.department}
-                </div>
-              </div>
+            {(() => {
+              const activeSelectedItem = ingredients.find(i => i.id === selectedItem?.id) || selectedItem;
+              return (
+                <>
+                  {/* Grid details */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 bg-secondary/35 rounded-xl border border-border/45">
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1.5">
+                        <Tag className="h-3.5 w-3.5 opacity-60" />
+                        Department
+                      </div>
+                      <div className="text-sm font-extrabold text-foreground mt-1.5 capitalize">
+                        {activeSelectedItem?.department}
+                      </div>
+                    </div>
 
-              <div className="p-3 bg-secondary/35 rounded-xl border border-border/45">
-                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1.5">
-                  <Coins className="h-3.5 w-3.5 opacity-60 text-emerald-500" />
-                  Unit Price
-                </div>
-                <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 mt-1.5">
-                  LKR {selectedItem?.unitPrice ? parseFloat(selectedItem.unitPrice as any).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00'}
-                </div>
-              </div>
+                    <div className="p-3 bg-secondary/35 rounded-xl border border-border/45">
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1.5">
+                        <Coins className="h-3.5 w-3.5 opacity-60 text-emerald-500" />
+                        Unit Price
+                      </div>
+                      <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 mt-1.5">
+                        LKR {activeSelectedItem?.unitPrice ? parseFloat(activeSelectedItem.unitPrice as any).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00'}
+                      </div>
+                    </div>
 
-              <div className="p-3 bg-secondary/35 rounded-xl border border-border/45 col-span-2">
-                <div className="flex justify-between items-center">
-                  <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">
-                      Current Stock Level
-                    </span>
-                    <span className={cn(
-                      "text-2xl font-black tracking-tight",
-                      selectedItem && selectedItem.stock <= selectedItem.minThreshold ? "text-amber-600 dark:text-amber-400" : "text-foreground"
-                    )}>
-                      {selectedItem?.stock} <span className="text-xs font-semibold text-muted-foreground">{selectedItem?.unit}</span>
-                    </span>
+                    <div className="p-3 bg-secondary/35 rounded-xl border border-border/45 col-span-2">
+                      <div className="flex justify-between items-center">
+                        <div className="space-y-1">
+                          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">
+                            Current Stock Level
+                          </span>
+                          <span className={cn(
+                            "text-2xl font-black tracking-tight",
+                            activeSelectedItem && activeSelectedItem.stock <= activeSelectedItem.minThreshold ? "text-amber-600 dark:text-amber-400" : "text-foreground"
+                          )}>
+                            {activeSelectedItem?.stock} <span className="text-xs font-semibold text-muted-foreground">{activeSelectedItem?.unit}</span>
+                          </span>
+                        </div>
+                        <div className="text-right space-y-1 border-l border-border/50 pl-4">
+                          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">
+                            Min Threshold
+                          </span>
+                          <span className="text-sm font-extrabold text-muted-foreground">
+                            {activeSelectedItem?.minThreshold} {activeSelectedItem?.unit}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Consumption (Last 30 Days) card */}
+                    <div className="p-3 bg-red-500/5 rounded-xl border border-red-500/10 col-span-2">
+                      <div className="text-[10px] uppercase font-bold text-red-600 dark:text-red-400 tracking-wider flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 opacity-80" />
+                        Consumption (Last 30 Days)
+                      </div>
+                      <div className="text-lg font-extrabold text-foreground mt-1 flex items-baseline gap-1">
+                        <span>{activeSelectedItem?.consumption || 0}</span>
+                        <span className="text-xs font-semibold text-muted-foreground">{activeSelectedItem?.unit}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-right space-y-1 border-l border-border/50 pl-4">
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">
-                      Min Threshold
-                    </span>
-                    <span className="text-sm font-extrabold text-muted-foreground">
-                      {selectedItem?.minThreshold} {selectedItem?.unit}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Warnings if Low Stock */}
-            {selectedItem && selectedItem.stock <= selectedItem.minThreshold && (
-              <div className="flex items-center gap-2.5 p-3 rounded-xl border border-amber-500/20 bg-amber-500/10 text-xs font-semibold text-amber-700 dark:text-amber-400">
-                <ShieldAlert className="h-4 w-4 shrink-0 animate-bounce" />
-                <span>Attention: This item is below safety levels. Restock required.</span>
-              </div>
-            )}
+                  {/* Warnings if Low Stock */}
+                  {activeSelectedItem && activeSelectedItem.stock <= activeSelectedItem.minThreshold && (
+                    <div className="flex items-center gap-2.5 p-3 mt-4 rounded-xl border border-amber-500/20 bg-amber-500/10 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                      <ShieldAlert className="h-4 w-4 shrink-0 animate-bounce" />
+                      <span>Attention: This item is below safety levels. Restock required.</span>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </DialogContent>
       </Dialog>

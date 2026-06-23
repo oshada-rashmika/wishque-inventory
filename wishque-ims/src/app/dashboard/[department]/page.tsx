@@ -55,11 +55,26 @@ export async function mutateStockBalance(
     throw new Error("User session expired or invalid.")
   }
 
+  const { data: currentItem, error: fetchError } = await supabase
+    .from("inventory_items")
+    .select("consumption")
+    .eq("id", itemId)
+    .single()
+
+  if (fetchError || !currentItem) {
+    throw new Error("Item not found to fetch consumption.")
+  }
+
+  const payload: any = { current_stock: parseFloat(newStock.toFixed(2)) }
+  if (type === "OUT") {
+    payload.consumption = (currentItem.consumption || 0) + quantityChanged
+  }
+
   const { data: updatedItem, error: updateError } = await supabase
     .from("inventory_items")
-    .update({ current_stock: parseFloat(newStock.toFixed(2)) })
+    .update(payload)
     .eq("id", itemId)
-    .select("id, name, current_stock")
+    .select("id, name, current_stock, consumption")
     .single()
 
   if (updateError) {
@@ -153,7 +168,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
   if (profile.department === "Bakery" && profile.role === "Head Chef") {
     const { data: items } = await supabase
       .from("inventory_items")
-      .select("id, name, unit, current_stock, minimum_threshold, department, unit_price")
+      .select("id, name, unit, current_stock, minimum_threshold, department, unit_price, consumption")
       .eq("department", "Bakery")
       .order("name", { ascending: true })
     if (items) bakeryIngredients = items
@@ -163,7 +178,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
     // 1. Fetch items
     const { data: items } = await supabase
       .from("inventory_items")
-      .select("id, name, unit, current_stock, minimum_threshold, department, unit_price")
+      .select("id, name, unit, current_stock, minimum_threshold, department, unit_price, consumption")
       .eq("department", profile.department)
       .order("name", { ascending: true })
 
