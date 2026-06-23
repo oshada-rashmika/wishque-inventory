@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
-import { LogOut, User } from "lucide-react"
+import { LogOut, User, Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { logoutAction } from "@/app/actions/auth"
 import { cn } from "@/lib/utils"
@@ -64,6 +64,12 @@ export default function Navbar({ profile }: NavbarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [isLoggingOut, setIsLoggingOut] = React.useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
+
+  // Close mobile menu on route change
+  React.useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [pathname])
 
   const handleSignOut = async () => {
     setIsLoggingOut(true)
@@ -85,16 +91,22 @@ export default function Navbar({ profile }: NavbarProps) {
   const isActiveProducts = pathname === "/dashboard/products"
   const isActiveInventory = pathname === `${dashboardPath}/inventory`
 
+  const navLinks = [
+    { href: dashboardPath, label: "Dashboard", active: isActiveDashboard },
+    ...(isAssistantManager ? [{ href: `${dashboardPath}/inventory`, label: "Inventory", active: isActiveInventory }] : []),
+    { href: "/dashboard/products", label: "Products", active: isActiveProducts },
+  ]
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
-      <div className="w-full px-6 flex h-16 items-center justify-between">
-        {/* Brand & Navigation */}
-        <div className="flex items-center gap-4 sm:gap-6">
+      <div className="w-full px-4 sm:px-6 flex h-14 sm:h-16 items-center justify-between">
+        {/* Left: Logo + Desktop Nav */}
+        <div className="flex items-center gap-3 sm:gap-4 md:gap-6">
           <Link 
             href={dashboardPath}
             className="transition-opacity hover:opacity-80 active:scale-95"
           >
-            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl overflow-hidden bg-background shadow-xs border border-border/40">
+            <div className="relative flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl overflow-hidden bg-background shadow-xs border border-border/40">
               <Image
                 src="/logo.png"
                 alt="Wishque IMS Logo"
@@ -106,53 +118,34 @@ export default function Navbar({ profile }: NavbarProps) {
             </div>
           </Link>
 
-          <nav className="flex items-center gap-1.5 border-l border-border/30 pl-5 ml-1">
-            <Link
-              href={dashboardPath}
-              className={cn(
-                "px-3 py-1.5 text-[13px] font-bold rounded-lg transition-all",
-                isActiveDashboard 
-                  ? "bg-primary/10 text-primary shadow-xs" 
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              )}
-            >
-              Dashboard
-            </Link>
-            {isAssistantManager && (
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-1.5 border-l border-border/30 pl-5 ml-1">
+            {navLinks.map((link) => (
               <Link
-                href={`${dashboardPath}/inventory`}
+                key={link.href}
+                href={link.href}
                 className={cn(
                   "px-3 py-1.5 text-[13px] font-bold rounded-lg transition-all",
-                  isActiveInventory 
+                  link.active 
                     ? "bg-primary/10 text-primary shadow-xs" 
                     : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                 )}
               >
-                Current Inventory
+                {link.label}
               </Link>
-            )}
-            <Link
-              href="/dashboard/products"
-              className={cn(
-                "px-3 py-1.5 text-[13px] font-bold rounded-lg transition-all",
-                isActiveProducts 
-                  ? "bg-primary/10 text-primary shadow-xs" 
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              )}
-            >
-              Products
-            </Link>
+            ))}
           </nav>
         </div>
 
-        {/* User Details & Actions Section */}
-        <div className="flex items-center gap-3 sm:gap-4">
+        {/* Right: Profile + Mobile Hamburger */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="relative h-10 w-10 rounded-full flex items-center justify-center bg-muted/60 hover:bg-muted ring-offset-background transition-all hover:ring-2 hover:ring-primary/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer select-none p-0 overflow-hidden border border-border/40"
+                className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center bg-muted/60 hover:bg-muted ring-offset-background transition-all hover:ring-2 hover:ring-primary/20 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer select-none p-0 overflow-hidden border border-border/40"
               >
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/20 text-primary font-bold text-sm tracking-wide">
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/20 text-primary font-bold text-xs sm:text-sm tracking-wide">
                   {getInitials(profile.full_name)}
                 </div>
               </button>
@@ -194,8 +187,39 @@ export default function Navbar({ profile }: NavbarProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Mobile Hamburger Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden flex items-center justify-center h-9 w-9 rounded-lg border border-border/40 bg-muted/30 hover:bg-muted/60 transition-colors"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Navigation Drawer */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-border/40 bg-background/98 backdrop-blur-lg animate-in slide-in-from-top-2 duration-200">
+          <nav className="flex flex-col px-4 py-3 gap-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "px-4 py-3 text-sm font-bold rounded-xl transition-all",
+                  link.active 
+                    ? "bg-primary/10 text-primary" 
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      )}
     </header>
   )
 }

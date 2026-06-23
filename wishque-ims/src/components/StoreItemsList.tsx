@@ -239,13 +239,13 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
                   </div>
 
                   {/* Big Touch Action Controls */}
-                  <div className="flex items-center gap-3 ml-2">
+                  <div className="flex items-center gap-2 sm:gap-3 ml-0 sm:ml-2 flex-wrap">
                     {/* Reason Select */}
                     <select
                       value={reasons[item.id] || "OUT"}
                       onChange={(e) => setReasons(prev => ({ ...prev, [item.id]: e.target.value }))}
                       disabled={isMutatingId !== null}
-                      className="h-12 min-h-[48px] rounded-xl border border-border/80 bg-background/50 px-2.5 text-xs font-bold text-foreground shadow-xs cursor-pointer focus:ring-1 focus:ring-ring focus:outline-hidden disabled:opacity-50"
+                      className="h-10 sm:h-12 min-h-[40px] sm:min-h-[48px] rounded-xl border border-border/80 bg-background/50 px-2 sm:px-2.5 text-[11px] sm:text-xs font-bold text-foreground shadow-xs cursor-pointer focus:ring-1 focus:ring-ring focus:outline-hidden disabled:opacity-50"
                     >
                       <option value="IN">IN (Restock)</option>
                       <option value="OUT">OUT (Production)</option>
@@ -260,7 +260,7 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
                       value={amounts[item.id] || ""}
                       onChange={(e) => setAmounts(prev => ({ ...prev, [item.id]: e.target.value }))}
                       disabled={isMutatingId !== null}
-                      className="h-12 w-20 min-h-[48px] rounded-xl text-center font-bold"
+                      className="h-10 sm:h-12 w-16 sm:w-20 min-h-[40px] sm:min-h-[48px] rounded-xl text-center font-bold"
                     />
 
                     <Button
@@ -268,7 +268,7 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
                       size="lg"
                       onClick={() => handleUpdate(item.id)}
                       disabled={isMutatingId !== null || !amounts[item.id]}
-                      className="size-12 min-h-[48px] rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary border-border/70 hover:border-primary/30 active:scale-95 transition-all flex items-center justify-center shrink-0 disabled:opacity-50"
+                      className="size-10 sm:size-12 min-h-[40px] sm:min-h-[48px] rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary border-border/70 hover:border-primary/30 active:scale-95 transition-all flex items-center justify-center shrink-0 disabled:opacity-50"
                       aria-label={`Update ${item.name}`}
                     >
                       <Edit2 className="h-5 w-5" />

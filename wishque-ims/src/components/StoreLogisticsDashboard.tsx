@@ -195,9 +195,9 @@ export default function StoreLogisticsDashboard({
   }
 
   return (
-    <div className="grid gap-8 md:grid-cols-3 mt-6">
+    <div className="grid gap-6 lg:gap-8 grid-cols-1 lg:grid-cols-3 mt-4 sm:mt-6">
       {/* Shipment Entry Form */}
-      <Card className="md:col-span-1 border-0 shadow-lg bg-card/40 backdrop-blur-xl rounded-3xl h-full overflow-hidden flex flex-col">
+      <Card className="lg:col-span-1 border-0 shadow-lg bg-card/40 backdrop-blur-xl rounded-2xl sm:rounded-3xl h-full overflow-hidden flex flex-col">
         <CardHeader className="pb-4 shrink-0">
           <CardTitle className="text-xl font-extrabold flex items-center gap-2.5">
             <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
@@ -307,7 +307,7 @@ export default function StoreLogisticsDashboard({
       </Card>
 
       {/* Logistics Journal Log */}
-      <Card className="md:col-span-2 border-0 shadow-lg bg-card/40 backdrop-blur-xl rounded-3xl h-full overflow-hidden flex flex-col">
+      <Card className="lg:col-span-2 border-0 shadow-lg bg-card/40 backdrop-blur-xl rounded-2xl sm:rounded-3xl h-full overflow-hidden flex flex-col">
         <CardHeader className="pb-4 shrink-0 flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
           <div>
             <CardTitle className="text-xl font-extrabold flex items-center gap-2.5">
@@ -351,7 +351,7 @@ export default function StoreLogisticsDashboard({
                 const role = log.profiles?.role || "Staff"
 
                 return (
-                  <div key={log.id} className="group flex items-center justify-between p-4 rounded-2xl bg-background/50 border border-border/30 hover:bg-background hover:shadow-md hover:border-border/60 transition-all duration-300">
+                  <div key={log.id} className="group flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-background/50 border border-border/30 hover:bg-background hover:shadow-md hover:border-border/60 transition-all duration-300 gap-3 sm:gap-4">
                     <div className="flex items-center gap-4">
                       <div className={cn(
                         "p-3 rounded-xl shrink-0 transition-transform duration-300 group-hover:scale-110",
@@ -363,7 +363,7 @@ export default function StoreLogisticsDashboard({
                         <p className="text-sm font-bold text-foreground tracking-tight">
                           {item ? item.name : "Inventory Item"}
                         </p>
-                        <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground mt-1 opacity-80">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-[11px] font-medium text-muted-foreground mt-1 opacity-80">
                           <span className="flex items-center gap-1.5">
                             <Calendar className="h-3.5 w-3.5" />
                             {new Date(log.created_at).toLocaleDateString("en-US", {
@@ -382,7 +382,7 @@ export default function StoreLogisticsDashboard({
                     </div>
 
                     <span className={cn(
-                      "text-base font-black tracking-tight px-3 py-1 rounded-lg backdrop-blur-sm",
+                      "text-sm sm:text-base font-black tracking-tight px-2.5 sm:px-3 py-1 rounded-lg backdrop-blur-sm self-start sm:self-auto shrink-0",
                       isIncoming ? "text-emerald-600 bg-emerald-500/10 dark:text-emerald-400" : "text-blue-600 bg-blue-500/10 dark:text-blue-400"
                     )}>
                       {isIncoming ? "+" : "-"}{log.quantity_changed} {item?.unit}

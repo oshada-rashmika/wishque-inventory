@@ -202,23 +202,23 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
   const lowStockItems = isAsstManager ? inventoryItems.filter((item: any) => item.current_stock <= item.minimum_threshold) : []
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {lowStockItems.length > 0 && (
-        <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl shadow-sm flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+        <div className="bg-red-500/10 border border-red-500/20 p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm flex items-start sm:items-center gap-3 animate-in fade-in slide-in-from-top-2">
           <div className="p-2 bg-red-500/20 rounded-xl">
             <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0" />
           </div>
-          <p className="text-sm text-red-800 dark:text-red-300 font-medium leading-relaxed">
+          <p className="text-xs sm:text-sm text-red-800 dark:text-red-300 font-medium leading-relaxed">
             <strong className="font-bold">⚠️ Attention:</strong> [{lowStockItems.map((i: any) => i.name).join(", ")}] {lowStockItems.length === 1 ? "is" : "are"} currently below safety thresholds!
           </p>
         </div>
       )}
 
       <div>
-        <h1 className="text-3xl font-bold tracking-tight capitalize">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight capitalize">
           {profile.department} Dashboard
         </h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-sm sm:text-base text-muted-foreground mt-1.5 sm:mt-2">
           Welcome back. Logged in as: <span className="font-semibold text-foreground">{profile.role}</span>
         </p>
       </div>
@@ -283,12 +283,12 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
       )}
 
       {profile.role.includes("Assistant Manager") && ["Bakery", "Floral", "Stores", "Stationery"].includes(profile.department) && (
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50 backdrop-blur-xl rounded-3xl overflow-hidden mt-6 relative">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50 backdrop-blur-xl rounded-2xl sm:rounded-3xl overflow-hidden mt-4 sm:mt-6 relative">
           <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
             <DollarSign className="w-32 h-32" />
           </div>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-extrabold flex items-center gap-2.5">
+            <CardTitle className="text-base sm:text-lg font-extrabold flex items-center gap-2.5">
                <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
                  <Calculator className="h-5 w-5" />
                </div>
@@ -301,7 +301,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
           <CardContent className="pt-2 pb-6">
              <div className="flex items-baseline gap-1.5">
                <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">LKR</span>
-               <span className="text-4xl font-black tracking-tighter text-foreground">
+               <span className="text-3xl sm:text-4xl font-black tracking-tighter text-foreground">
                  {consumptionCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                </span>
              </div>

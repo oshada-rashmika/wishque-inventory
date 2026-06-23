@@ -57,7 +57,7 @@ export default async function InventoryPage({ params }: { params: Promise<{ depa
     return (
       <div className="space-y-6 max-w-5xl mx-auto pb-10">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight capitalize flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight capitalize flex items-center gap-3">
             <div className="p-2.5 bg-primary/10 rounded-2xl text-primary">
               <PackageOpen className="h-6 w-6" />
             </div>
@@ -78,7 +78,7 @@ export default async function InventoryPage({ params }: { params: Promise<{ depa
     return (
       <div className="space-y-6 max-w-5xl mx-auto pb-10">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight capitalize flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight capitalize flex items-center gap-3">
             <div className="p-2.5 bg-primary/10 rounded-2xl text-primary">
               <PackageOpen className="h-6 w-6" />
             </div>

@@ -54,7 +54,7 @@ export default async function ProductsPage() {
   return (
     <div className="space-y-6">
       {/* Header Actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
         <div className="flex items-center gap-3">
           <Button asChild variant="outline" size="sm" className="size-8 p-0 rounded-lg cursor-pointer">
             <Link href={`/dashboard/${deptSlug}`} aria-label="Back to dashboard">
@@ -62,7 +62,7 @@ export default async function ProductsPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground font-sans">Products List</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-sans">Products List</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
               Managing recipes and items for <span className="font-semibold text-foreground">{profile.department}</span>
             </p>
