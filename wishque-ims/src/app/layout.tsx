@@ -15,9 +15,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Wishque IMS",
-  description: "Wishque Inventory Management System",
+  description: "Real-time premium inventory management system designed for Wishque.",
   icons: {
     icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   },
 };
 
