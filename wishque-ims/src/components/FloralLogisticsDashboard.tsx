@@ -76,7 +76,7 @@ export default function FloralLogisticsDashboard({
       const timer = setTimeout(() => {
         setSuccessMsg(null)
         setErrorMsg(null)
-      }, 30000)
+      }, 10000)
       return () => clearTimeout(timer)
     }
   }, [successMsg, errorMsg])
@@ -282,21 +282,6 @@ export default function FloralLogisticsDashboard({
             </div>
 
             <div className="mt-auto pt-4 shrink-0 relative">
-              <div className="absolute bottom-full left-0 right-0 mb-4 flex flex-col gap-2 z-10">
-                {errorMsg && (
-                  <div className="flex items-start gap-2.5 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive animate-in fade-in slide-in-from-top-1 shadow-md">
-                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                    <p className="leading-tight">{errorMsg}</p>
-                  </div>
-                )}
-
-                {successMsg && (
-                  <div className="flex items-start gap-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-600 dark:text-emerald-400 animate-in fade-in slide-in-from-top-1 shadow-md">
-                    <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
-                    <p className="leading-tight">{successMsg}</p>
-                  </div>
-                )}
-              </div>
               <Button
                 type="submit"
                 disabled={isSubmitting || !selectedItemId}
@@ -318,6 +303,23 @@ export default function FloralLogisticsDashboard({
           </form>
         </CardContent>
       </Card>
+
+      {/* Toast Notifications */}
+      <div className="fixed top-6 left-1/2 -translate-x-1/2 flex flex-col gap-2 z-50 pointer-events-none w-full max-w-md px-4">
+        {errorMsg && (
+          <div className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/95 backdrop-blur-md p-4 text-sm text-destructive-foreground shadow-2xl animate-in slide-in-from-top-10 fade-in duration-300 pointer-events-auto">
+            <AlertCircle className="h-5 w-5 shrink-0 mt-0.5 opacity-90" />
+            <p className="leading-tight font-medium">{errorMsg}</p>
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="flex items-start gap-3 rounded-xl border border-emerald-500/20 bg-emerald-600/95 backdrop-blur-md p-4 text-sm text-white shadow-2xl animate-in slide-in-from-top-10 fade-in duration-300 pointer-events-auto">
+            <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5 opacity-90" />
+            <p className="leading-tight font-medium">{successMsg}</p>
+          </div>
+        )}
+      </div>
 
       {/* Logistics Journal Log */}
       <Card className="lg:col-span-2 border-0 shadow-lg bg-card/40 backdrop-blur-xl rounded-2xl sm:rounded-3xl h-full overflow-hidden flex flex-col">
