@@ -346,13 +346,23 @@ export default function FloralIngredientList({ initialIngredients, mutateStockBa
                 <>
                   {/* Grid details */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 bg-secondary/35 rounded-xl border border-border/45 col-span-2">
+                    <div className="p-3 bg-secondary/35 rounded-xl border border-border/45">
                       <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1.5">
                         <Tag className="h-3.5 w-3.5 opacity-60" />
                         Department
                       </div>
                       <div className="text-sm font-extrabold text-foreground mt-1.5 capitalize">
                         {activeSelectedItem?.department}
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-secondary/35 rounded-xl border border-border/45">
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1.5">
+                        <Coins className="h-3.5 w-3.5 opacity-60 text-emerald-500" />
+                        Unit Price
+                      </div>
+                      <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 mt-1.5">
+                        LKR {activeSelectedItem?.unitPrice ? parseFloat(activeSelectedItem.unitPrice as any).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00'}
                       </div>
                     </div>
 

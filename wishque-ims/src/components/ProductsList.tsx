@@ -112,7 +112,7 @@ export default function ProductsList({ initialProducts, token, userRole }: Produ
                   <SimpleBadge className="bg-secondary text-secondary-foreground text-[10px] tracking-wide uppercase border-transparent">
                     {product.category}
                   </SimpleBadge>
-                  {!userRole?.toLowerCase().includes("chef") && (
+                  {!(userRole?.toLowerCase().includes("chef") || userRole?.toLowerCase().includes("florist")) && (
                     <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
                       <Coins className="h-4 w-4 text-emerald-500/80" />
                       <span>LKR {parseFloat(product.price as any).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
@@ -146,7 +146,7 @@ export default function ProductsList({ initialProducts, token, userRole }: Produ
               <SimpleBadge className="bg-secondary text-secondary-foreground text-[9px] tracking-wide uppercase border-transparent">
                 {selectedProduct?.category}
               </SimpleBadge>
-              {selectedProduct && !userRole?.toLowerCase().includes("chef") && (
+              {selectedProduct && !(userRole?.toLowerCase().includes("chef") || userRole?.toLowerCase().includes("florist")) && (
                 <div className="text-emerald-600 dark:text-emerald-400 font-bold text-xs">
                   LKR {parseFloat(selectedProduct.price as any).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </div>
