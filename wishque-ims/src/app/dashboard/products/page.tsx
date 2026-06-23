@@ -80,7 +80,7 @@ export default async function ProductsPage() {
 
       {/* Main Interactive Products List Component */}
       {products && products.length > 0 ? (
-        <ProductsList initialProducts={products as any[]} token={token!} />
+        <ProductsList initialProducts={products as any[]} token={token!} userRole={profile.role} />
       ) : (
         <div className="text-center py-12 border border-dashed border-border/60 rounded-xl bg-card/20 flex flex-col items-center justify-center">
           <Database className="h-8 w-8 text-muted-foreground/60 mb-2" />
