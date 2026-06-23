@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
-import { LogOut, User, Menu, X } from "lucide-react"
+import { LogOut, User, Menu, X, Sun, Moon, Laptop } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { logoutAction } from "@/app/actions/auth"
 import { cn } from "@/lib/utils"
@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useTheme } from "@/components/ThemeProvider"
 
 
 export interface UserProfile {
@@ -63,6 +64,7 @@ const getInitials = (name: string | null) => {
 export default function Navbar({ profile }: NavbarProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const { theme, setTheme } = useTheme()
   const [isLoggingOut, setIsLoggingOut] = React.useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
 
@@ -176,6 +178,71 @@ export default function Navbar({ profile }: NavbarProps) {
                   </div>
                 </div>
               </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <div className="px-3 py-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-muted-foreground flex items-center gap-2">
+                    {theme === "dark" ? (
+                      <Moon className="h-3.5 w-3.5" />
+                    ) : theme === "light" ? (
+                      <Sun className="h-3.5 w-3.5" />
+                    ) : (
+                      <Laptop className="h-3.5 w-3.5" />
+                    )}
+                    Theme
+                  </span>
+                  <div className="flex items-center gap-0.5 bg-muted dark:bg-zinc-800/80 p-0.5 rounded-lg border border-border/40 select-none">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setTheme("light")
+                      }}
+                      className={cn(
+                        "p-1 rounded-md transition-all cursor-pointer",
+                        theme === "light"
+                          ? "bg-white dark:bg-zinc-700 text-foreground shadow-2xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                      title="Light Mode"
+                    >
+                      <Sun className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setTheme("dark")
+                      }}
+                      className={cn(
+                        "p-1 rounded-md transition-all cursor-pointer",
+                        theme === "dark"
+                          ? "bg-white dark:bg-zinc-700 text-foreground shadow-2xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                      title="Dark Mode"
+                    >
+                      <Moon className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setTheme("system")
+                      }}
+                      className={cn(
+                        "p-1 rounded-md transition-all cursor-pointer",
+                        theme === "system"
+                          ? "bg-white dark:bg-zinc-700 text-foreground shadow-2xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                      title="System Preference"
+                    >
+                      <Laptop className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleSignOut}
