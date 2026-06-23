@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Croissant, Flower2, PackageOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
-import FloralIngredientList from "./FloralIngredientList"
+import FloralInventoryGrid from "./FloralInventoryGrid"
 import BakeryInventoryGrid from "./BakeryInventoryGrid"
 
 interface ProductionInventoryDashboardProps {
@@ -84,7 +84,7 @@ export default function ProductionInventoryDashboard({
 
         {activeTab === "floral" && (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <FloralIngredientList initialIngredients={floralItems} mutateStockBalance={mutateStockBalance} />
+            <FloralInventoryGrid inventoryItems={floralItems} />
           </div>
         )}
       </div>
