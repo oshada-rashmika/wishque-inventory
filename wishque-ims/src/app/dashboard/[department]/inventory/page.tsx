@@ -1,10 +1,10 @@
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { PackageOpen, AlertTriangle } from "lucide-react"
+import { PackageOpen } from "lucide-react"
 import FloralIngredientList from "@/components/FloralIngredientList"
 import StoreItemsList from "@/components/StoreItemsList"
+import BakeryInventoryGrid from "@/components/BakeryInventoryGrid"
 import { mutateStockBalance } from "../page"
 
 export default async function InventoryPage({ params }: { params: Promise<{ department: string }> }) {
@@ -47,7 +47,7 @@ export default async function InventoryPage({ params }: { params: Promise<{ depa
 
   const { data: inventoryItems } = await supabase
     .from("inventory_items")
-    .select("id, name, unit, current_stock, minimum_threshold")
+    .select("id, name, unit, current_stock, minimum_threshold, department, unit_price")
     .eq("department", profile.department)
     .order("name", { ascending: true })
 
@@ -110,40 +110,7 @@ export default async function InventoryPage({ params }: { params: Promise<{ depa
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-8">
-        {inventoryItems.map((item: any) => {
-          const isLowStock = item.current_stock <= item.minimum_threshold
-
-          return (
-            <Card key={item.id} className="border-0 shadow-lg bg-card/40 backdrop-blur-xl rounded-3xl overflow-hidden hover:shadow-xl transition-shadow duration-300">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-bold flex items-center justify-between">
-                  <span className="truncate pr-2">{item.name}</span>
-                  {isLowStock && (
-                    <div className="px-2.5 py-1 bg-red-500/10 text-red-600 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shrink-0">
-                      <AlertTriangle className="h-3 w-3" />
-                      Low
-                    </div>
-                  )}
-                </CardTitle>
-                <CardDescription className="text-xs font-medium opacity-60">
-                  Minimum threshold: {item.minimum_threshold} {item.unit}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-2 pb-5">
-                <div className="flex items-baseline gap-1.5">
-                  <span className={`text-3xl font-black tracking-tighter ${isLowStock ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>
-                    {item.current_stock}
-                  </span>
-                  <span className="text-sm font-semibold text-muted-foreground">
-                    {item.unit}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
+      <BakeryInventoryGrid inventoryItems={inventoryItems as any[]} />
     </div>
   )
 }

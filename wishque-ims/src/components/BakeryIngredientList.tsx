@@ -2,10 +2,11 @@
 
 import * as React from "react"
 import Image from "next/image"
-import { Search, Plus, Minus, AlertTriangle, CheckCircle, Package, Loader2, Edit2 } from "lucide-react"
+import { Search, Plus, Minus, AlertTriangle, CheckCircle, Package, Loader2, Edit2, Info, Coins, Tag, ShieldAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 
 interface Ingredient {
   id: string
@@ -14,6 +15,8 @@ interface Ingredient {
   stock: number
   unit: string
   minThreshold: number
+  department: string
+  unitPrice: number
 }
 
 interface DatabaseIngredient {
@@ -22,6 +25,8 @@ interface DatabaseIngredient {
   unit: string
   current_stock: number
   minimum_threshold: number
+  department?: string
+  unit_price?: number
 }
 
 interface BakeryIngredientListProps {
@@ -30,7 +35,8 @@ interface BakeryIngredientListProps {
     itemId: string,
     newStock: number,
     quantityChanged: number,
-    type: "IN" | "OUT" | "WASTE"
+    type: "IN" | "OUT" | "WASTE",
+    department?: string
   ) => Promise<{ success: boolean; updatedItem: any }>
 }
 
@@ -47,6 +53,9 @@ const IMAGE_MAP: Record<string, string> = {
 }
 
 export default function BakeryIngredientList({ initialIngredients, mutateStockBalance }: BakeryIngredientListProps) {
+  const [selectedItem, setSelectedItem] = React.useState<Ingredient | null>(null)
+  const [isDetailOpen, setIsDetailOpen] = React.useState(false)
+
   // Map database inventory items into our component format
   const getMappedIngredients = React.useCallback((items: DatabaseIngredient[]): Ingredient[] => {
     return items.map(item => ({
@@ -55,6 +64,8 @@ export default function BakeryIngredientList({ initialIngredients, mutateStockBa
       unit: item.unit,
       stock: item.current_stock,
       minThreshold: item.minimum_threshold,
+      department: item.department || "Bakery",
+      unitPrice: item.unit_price || 0,
       image: IMAGE_MAP[item.name] || "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=120&h=120&fit=crop"
     }))
   }, [])
@@ -191,7 +202,13 @@ export default function BakeryIngredientList({ initialIngredients, mutateStockBa
                 )}
               >
                 {/* Left Side: Image & Info */}
-                <div className="flex items-center gap-4">
+                <div 
+                  onClick={() => {
+                    setSelectedItem(item)
+                    setIsDetailOpen(true)
+                  }}
+                  className="flex items-center gap-4 cursor-pointer hover:opacity-85 select-none transition-all flex-1"
+                >
                   <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-border/50 bg-muted shrink-0 shadow-xs">
                     <Image
                       src={item.image}
@@ -203,8 +220,9 @@ export default function BakeryIngredientList({ initialIngredients, mutateStockBa
                     />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold text-foreground leading-tight tracking-tight">
+                    <h3 className="text-base font-semibold text-foreground leading-tight tracking-tight flex items-center gap-1.5 hover:text-primary transition-colors">
                       {item.name}
+                      <Info className="h-3.5 w-3.5 opacity-40 hover:opacity-100 transition-opacity shrink-0" />
                     </h3>
                     <div className="flex items-center gap-2 mt-1.5">
                       <span className={cn(
@@ -288,6 +306,91 @@ export default function BakeryIngredientList({ initialIngredients, mutateStockBa
           </div>
         )}
       </div>
+
+      {/* Detail Pop-up Modal */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="sm:max-w-md border border-border/85 shadow-2xl rounded-2xl bg-card/95 backdrop-blur-md">
+          <DialogHeader className="flex flex-row items-center gap-4 text-left border-b border-border/40 pb-4">
+            <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-border/60 bg-muted shrink-0 shadow-xs">
+              {selectedItem && (
+                <Image
+                  src={selectedItem.image}
+                  alt={selectedItem.name}
+                  fill
+                  sizes="64px"
+                  className="object-cover"
+                  unoptimized
+                />
+              )}
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-extrabold tracking-tight text-foreground">
+                {selectedItem?.name}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                Detailed inventory specification and pricing.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          <div className="py-4 space-y-4">
+            {/* Grid details */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 bg-secondary/35 rounded-xl border border-border/45">
+                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5 opacity-60" />
+                  Department
+                </div>
+                <div className="text-sm font-extrabold text-foreground mt-1.5 capitalize">
+                  {selectedItem?.department}
+                </div>
+              </div>
+
+              <div className="p-3 bg-secondary/35 rounded-xl border border-border/45">
+                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1.5">
+                  <Coins className="h-3.5 w-3.5 opacity-60 text-emerald-500" />
+                  Unit Price
+                </div>
+                <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 mt-1.5">
+                  LKR {selectedItem?.unitPrice ? parseFloat(selectedItem.unitPrice as any).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00'}
+                </div>
+              </div>
+
+              <div className="p-3 bg-secondary/35 rounded-xl border border-border/45 col-span-2">
+                <div className="flex justify-between items-center">
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">
+                      Current Stock Level
+                    </span>
+                    <span className={cn(
+                      "text-2xl font-black tracking-tight",
+                      selectedItem && selectedItem.stock <= selectedItem.minThreshold ? "text-amber-600 dark:text-amber-400" : "text-foreground"
+                    )}>
+                      {selectedItem?.stock} <span className="text-xs font-semibold text-muted-foreground">{selectedItem?.unit}</span>
+                    </span>
+                  </div>
+                  <div className="text-right space-y-1 border-l border-border/50 pl-4">
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">
+                      Min Threshold
+                    </span>
+                    <span className="text-sm font-extrabold text-muted-foreground">
+                      {selectedItem?.minThreshold} {selectedItem?.unit}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Warnings if Low Stock */}
+            {selectedItem && selectedItem.stock <= selectedItem.minThreshold && (
+              <div className="flex items-center gap-2.5 p-3 rounded-xl border border-amber-500/20 bg-amber-500/10 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                <ShieldAlert className="h-4 w-4 shrink-0 animate-bounce" />
+                <span>Attention: This item is below safety levels. Restock required.</span>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

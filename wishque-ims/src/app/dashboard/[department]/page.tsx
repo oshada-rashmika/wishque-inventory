@@ -153,7 +153,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
   if (profile.department === "Bakery" && profile.role === "Head Chef") {
     const { data: items } = await supabase
       .from("inventory_items")
-      .select("id, name, unit, current_stock, minimum_threshold")
+      .select("id, name, unit, current_stock, minimum_threshold, department, unit_price")
       .eq("department", "Bakery")
       .order("name", { ascending: true })
     if (items) bakeryIngredients = items
@@ -163,7 +163,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
     // 1. Fetch items
     const { data: items } = await supabase
       .from("inventory_items")
-      .select("id, name, unit, current_stock, minimum_threshold")
+      .select("id, name, unit, current_stock, minimum_threshold, department, unit_price")
       .eq("department", profile.department)
       .order("name", { ascending: true })
 
