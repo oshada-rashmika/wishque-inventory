@@ -181,7 +181,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
 
   let floralIngredients: any[] = []
 
-  if (profile.department === "Floral" && profile.role === "Florist") {
+  if (profile.department === "Floral" && (profile.role === "Florist" || profile.role === "Floral Assistant")) {
     const { data: items } = await supabase
       .from("inventory_items")
       .select("id, name, unit, current_stock, minimum_threshold, department, unit_price, consumption")
@@ -268,7 +268,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
 
       {profile.department === "Bakery" && (profile.role.includes("Head Chef") || profile.role.includes("Kitchen Assistant")) ? (
         <BakeryIngredientList initialIngredients={bakeryIngredients} mutateStockBalance={mutateStockBalance} />
-      ) : profile.department === "Floral" && profile.role.includes("Florist") ? (
+      ) : profile.department === "Floral" && (profile.role.includes("Florist") || profile.role.includes("Floral Assistant")) ? (
         <FloralIngredientList initialIngredients={floralIngredients} mutateStockBalance={mutateStockBalance} />
       ) : profile.department === "Bakery" && profile.role.includes("Assistant Manager") ? (
         <BakeryLogisticsDashboard
