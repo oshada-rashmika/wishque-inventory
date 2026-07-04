@@ -267,6 +267,9 @@ export default function BakeryIngredientList({ initialIngredients, mutateStockBa
                     </span>
                   </div>
 
+                  {/* Divider */}
+                  <div className="hidden sm:block w-px h-10 sm:h-12 bg-border/50" />
+
                   {/* Big Touch Action Controls */}
                   <div className="flex items-center gap-2 sm:gap-3 ml-0 sm:ml-2 flex-wrap">
                     {/* Reason Select */}
