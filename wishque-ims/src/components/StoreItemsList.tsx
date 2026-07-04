@@ -92,7 +92,11 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
       return
     }
 
-    const reason = reasons[id] || "OUT"
+    const reason = reasons[id]
+    if (!reason) {
+      alert("Please select an action type.")
+      return
+    }
     let newStock = item.stock
 
     if (reason === "IN") {
@@ -116,6 +120,7 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
         } : i)
       )
       setAmounts(prev => ({ ...prev, [id]: "" }))
+      setReasons(prev => ({ ...prev, [id]: "" }))
     } catch (err) {
       console.error("Failed to update stock:", err)
       alert("Failed to update inventory in database.")
@@ -262,16 +267,20 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
                     </span>
                   </div>
 
+                  {/* Divider */}
+                  <div className="hidden sm:block w-px h-10 sm:h-12 bg-border/50" />
+
                   {/* Big Touch Action Controls */}
                   <div className="flex items-center gap-2 sm:gap-3 ml-0 sm:ml-2 flex-wrap">
                     {/* Reason Select */}
                     <select
-                      value={reasons[item.id] || "OUT"}
+                      value={reasons[item.id] || ""}
                       onChange={(e) => setReasons(prev => ({ ...prev, [item.id]: e.target.value }))}
                       disabled={isMutatingId !== null}
                       className="h-10 sm:h-12 min-h-[40px] sm:min-h-[48px] rounded-xl border border-border/80 bg-background/50 px-2 sm:px-2.5 text-[11px] sm:text-xs font-bold text-foreground shadow-xs cursor-pointer focus:ring-1 focus:ring-ring focus:outline-hidden disabled:opacity-50"
                     >
-                      <option value="IN">Restock</option>
+                      <option value="" disabled hidden></option>
+                      <option value="IN">IN (Restock)</option>
                       <option value="OUT">Used</option>
                     </select>
 
@@ -290,7 +299,7 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
                       variant="outline"
                       size="lg"
                       onClick={() => handleUpdate(item.id)}
-                      disabled={isMutatingId !== null || !amounts[item.id]}
+                      disabled={isMutatingId !== null || !amounts[item.id] || !reasons[item.id]}
                       className="size-10 sm:size-12 min-h-[40px] sm:min-h-[48px] rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary border-border/70 hover:border-primary/30 active:scale-95 transition-all flex items-center justify-center shrink-0 disabled:opacity-50"
                       aria-label={`Update ${item.name}`}
                     >

@@ -58,13 +58,15 @@ export async function mutateStockBalance(
 
   const { data: currentItem, error: fetchError } = await supabase
     .from("inventory_items")
-    .select("consumption")
+    .select("consumption, department")
     .eq("id", itemId)
     .single()
 
   if (fetchError || !currentItem) {
     throw new Error("Item not found to fetch consumption.")
   }
+
+  const resolvedDepartment = department || currentItem.department
 
   const payload: any = { current_stock: parseFloat(newStock.toFixed(2)) }
   if (type === "OUT") {
@@ -88,11 +90,8 @@ export async function mutateStockBalance(
     item_id: itemId,
     quantity_changed: quantityChanged,
     type: type,
-    user_id: user.id
-  }
-
-  if (department) {
-    logPayload.department = department
+    user_id: user.id,
+    department: resolvedDepartment
   }
 
   const { error: logError } = await supabase
@@ -171,7 +170,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
   let inventoryItems: any[] = []
   let bakeryIngredients: any[] = []
 
-  if (profile.department === "Bakery" && profile.role === "Head Chef") {
+  if (profile.department === "Bakery" && (profile.role === "Head Chef" || profile.role === "Kitchen Assistant")) {
     const { data: items } = await supabase
       .from("inventory_items")
       .select("id, name, unit, current_stock, minimum_threshold, department, unit_price, consumption")
@@ -182,7 +181,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
 
   let floralIngredients: any[] = []
 
-  if (profile.department === "Floral" && profile.role === "Florist") {
+  if (profile.department === "Floral" && (profile.role === "Florist" || profile.role === "Floral Assistant")) {
     const { data: items } = await supabase
       .from("inventory_items")
       .select("id, name, unit, current_stock, minimum_threshold, department, unit_price, consumption")
@@ -267,9 +266,9 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
         </p>
       </div>
 
-      {profile.department === "Bakery" && profile.role.includes("Head Chef") ? (
+      {profile.department === "Bakery" && (profile.role.includes("Head Chef") || profile.role.includes("Kitchen Assistant")) ? (
         <BakeryIngredientList initialIngredients={bakeryIngredients} mutateStockBalance={mutateStockBalance} />
-      ) : profile.department === "Floral" && profile.role.includes("Florist") ? (
+      ) : profile.department === "Floral" && (profile.role.includes("Florist") || profile.role.includes("Floral Assistant")) ? (
         <FloralIngredientList initialIngredients={floralIngredients} mutateStockBalance={mutateStockBalance} />
       ) : profile.department === "Bakery" && profile.role.includes("Assistant Manager") ? (
         <BakeryLogisticsDashboard
