@@ -58,13 +58,15 @@ export async function mutateStockBalance(
 
   const { data: currentItem, error: fetchError } = await supabase
     .from("inventory_items")
-    .select("consumption")
+    .select("consumption, department")
     .eq("id", itemId)
     .single()
 
   if (fetchError || !currentItem) {
     throw new Error("Item not found to fetch consumption.")
   }
+
+  const resolvedDepartment = department || currentItem.department
 
   const payload: any = { current_stock: parseFloat(newStock.toFixed(2)) }
   if (type === "OUT") {
@@ -88,11 +90,8 @@ export async function mutateStockBalance(
     item_id: itemId,
     quantity_changed: quantityChanged,
     type: type,
-    user_id: user.id
-  }
-
-  if (department) {
-    logPayload.department = department
+    user_id: user.id,
+    department: resolvedDepartment
   }
 
   const { error: logError } = await supabase

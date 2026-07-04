@@ -112,7 +112,7 @@ export default function BakeryIngredientList({ initialIngredients, mutateStockBa
 
     setIsMutatingId(id)
     try {
-      await mutateStockBalance(id, parseFloat(newStock.toFixed(2)), actualChanged, reason as any)
+      await mutateStockBalance(id, parseFloat(newStock.toFixed(2)), actualChanged, reason as any, "Bakery")
       setIngredients(prev =>
         prev.map(i => i.id === id ? { 
           ...i, 
