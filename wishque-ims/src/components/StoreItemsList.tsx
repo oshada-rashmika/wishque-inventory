@@ -76,6 +76,12 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
   const [reasons, setReasons] = React.useState<Record<string, string>>({})
   const [amounts, setAmounts] = React.useState<Record<string, string>>({})
   const [isMutatingId, setIsMutatingId] = React.useState<string | null>(null)
+  const [selectedCategory, setSelectedCategory] = React.useState("All")
+
+  const categories = React.useMemo(() => {
+    const cats = Array.from(new Set(ingredients.map(item => item.category)))
+    return ["All", ...cats.sort()]
+  }, [ingredients])
 
   // Sync state if initialIngredients prop changes
   React.useEffect(() => {
@@ -178,27 +184,44 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
         </div>
       </div>
 
-      {/* Search Header */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <h2 className="text-xl font-bold text-foreground tracking-tight self-start sm:self-center">
-          Store Items Inventory
-        </h2>
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <Input
-            placeholder="Search items..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-background/50 focus:bg-background transition-all"
-          />
+      {/* Search Header & Category Toggles */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <h2 className="text-xl font-bold text-foreground tracking-tight self-start sm:self-center">
+            Store Items Inventory
+          </h2>
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Search items..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 bg-background/50 focus:bg-background transition-all"
+            />
+          </div>
+        </div>
+        
+        {/* Category Toggles */}
+        <div className="flex flex-wrap gap-2">
+          {categories.map(cat => (
+            <Button
+              key={cat}
+              variant={selectedCategory === cat ? "default" : "outline"}
+              onClick={() => setSelectedCategory(cat)}
+              className="rounded-full px-6 transition-all"
+              size="sm"
+            >
+              {cat}
+            </Button>
+          ))}
         </div>
       </div>
 
       {/* Ingredient Grid/List Grouped by Category */}
       <div className="flex flex-col gap-8">
-        {filteredIngredients.length > 0 ? (
+        {filteredIngredients.filter(i => selectedCategory === "All" || i.category === selectedCategory).length > 0 ? (
           Object.entries(
-            filteredIngredients.reduce((acc, item) => {
+            filteredIngredients.filter(i => selectedCategory === "All" || i.category === selectedCategory).reduce((acc, item) => {
               if (!acc[item.category]) acc[item.category] = []
               acc[item.category].push(item)
               return acc
@@ -223,7 +246,7 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
                           : "border-border/60 bg-card/50 hover:bg-accent/15 hover:border-border/95"
                       )}
                     >
-                      {/* Left Side: Image & Info */}
+                      {/* Left Side: Info */}
                       <div 
                         onClick={() => {
                           setSelectedItem(item)
@@ -231,16 +254,6 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
                         }}
                         className="flex items-center gap-4 cursor-pointer hover:opacity-85 select-none transition-all flex-1"
                       >
-                        <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-border/50 bg-muted shrink-0 shadow-xs">
-                          <Image
-                            src={item.image}
-                            alt={item.name}
-                            fill
-                            sizes="56px"
-                            className="object-cover transition-transform duration-500 hover:scale-105"
-                            unoptimized
-                          />
-                        </div>
                         <div>
                           <h3 className="text-base font-semibold text-foreground leading-tight tracking-tight flex items-center gap-1.5 hover:text-primary transition-colors">
                             {item.name}
@@ -339,18 +352,6 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DialogContent className="sm:max-w-md border border-border/85 shadow-2xl rounded-2xl bg-card/95 backdrop-blur-md">
           <DialogHeader className="flex flex-row items-center gap-4 text-left border-b border-border/40 pb-4">
-            <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-border/60 bg-muted shrink-0 shadow-xs">
-              {selectedItem && (
-                <Image
-                  src={selectedItem.image}
-                  alt={selectedItem.name}
-                  fill
-                  sizes="64px"
-                  className="object-cover"
-                  unoptimized
-                />
-              )}
-            </div>
             <div>
               <DialogTitle className="text-lg font-extrabold tracking-tight text-foreground">
                 {selectedItem?.name}
