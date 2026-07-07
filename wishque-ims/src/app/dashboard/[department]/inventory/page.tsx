@@ -46,7 +46,7 @@ export default async function InventoryPage({ params }: { params: Promise<{ depa
     redirect(`/dashboard/${departmentParam}`)
   }
 
-  let query = supabase.from("inventory_items").select("id, name, unit, current_stock, minimum_threshold, department, unit_price, consumption").order("name", { ascending: true })
+  let query = supabase.from("inventory_items").select("id, name, category, unit, current_stock, minimum_threshold, department, unit_price, consumption").order("name", { ascending: true })
 
   if (profile.department === "Production") {
     query = query.in("department", ["Bakery", "Floral"])

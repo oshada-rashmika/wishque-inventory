@@ -16,6 +16,7 @@ interface Ingredient {
   unit: string
   minThreshold: number
   department: string
+  category: string
   unitPrice: number
   consumption: number
 }
@@ -27,6 +28,7 @@ interface DatabaseIngredient {
   current_stock: number
   minimum_threshold: number
   department?: string
+  category?: string
   unit_price?: number
   consumption?: number
 }
@@ -62,6 +64,7 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
       stock: item.current_stock,
       minThreshold: item.minimum_threshold,
       department: item.department || "Stores",
+      category: item.category || "General",
       unitPrice: item.unit_price || 0,
       consumption: item.consumption || 0,
       image: IMAGE_MAP[item.name] || "https://images.unsplash.com/photo-1470790376778-a9fbc86d70e2?w=120&h=120&fit=crop"
@@ -191,125 +194,140 @@ export default function StoreItemsList({ initialIngredients, mutateStockBalance 
         </div>
       </div>
 
-      {/* Ingredient Grid/List */}
-      <div className="flex flex-col gap-3">
+      {/* Ingredient Grid/List Grouped by Category */}
+      <div className="flex flex-col gap-8">
         {filteredIngredients.length > 0 ? (
-          filteredIngredients.map(item => {
-            const isLow = item.stock <= item.minThreshold
-            const isMutating = isMutatingId === item.id
+          Object.entries(
+            filteredIngredients.reduce((acc, item) => {
+              if (!acc[item.category]) acc[item.category] = []
+              acc[item.category].push(item)
+              return acc
+            }, {} as Record<string, Ingredient[]>)
+          ).map(([category, items]) => (
+            <div key={category} className="space-y-4">
+              <h3 className="text-lg font-bold text-foreground/80 pl-1 border-b border-border/50 pb-2">
+                {category}
+              </h3>
+              <div className="flex flex-col gap-3">
+                {items.map(item => {
+                  const isLow = item.stock <= item.minThreshold
+                  const isMutating = isMutatingId === item.id
 
-            return (
-               <div
-                key={item.id}
-                className={cn(
-                  "flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-all duration-300 gap-4",
-                  isLow 
-                    ? "border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/15 hover:border-amber-500/70 shadow-[0_0_15px_rgba(245,158,11,0.1)] relative overflow-hidden" 
-                    : "border-border/60 bg-card/50 hover:bg-accent/15 hover:border-border/95"
-                )}
-              >
-                {/* Left Side: Image & Info */}
-                <div 
-                  onClick={() => {
-                    setSelectedItem(item)
-                    setIsDetailOpen(true)
-                  }}
-                  className="flex items-center gap-4 cursor-pointer hover:opacity-85 select-none transition-all flex-1"
-                >
-                  <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-border/50 bg-muted shrink-0 shadow-xs">
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      fill
-                      sizes="56px"
-                      className="object-cover transition-transform duration-500 hover:scale-105"
-                      unoptimized
-                    />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-foreground leading-tight tracking-tight flex items-center gap-1.5 hover:text-primary transition-colors">
-                      {item.name}
-                      <Info className="h-3.5 w-3.5 opacity-40 hover:opacity-100 transition-opacity shrink-0" />
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <span className={cn(
-                        "inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-xs",
-                        isLow
-                          ? "bg-amber-500/10 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400"
-                          : "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400"
-                      )}>
-                        {isLow ? "Low Stock" : "In Stock"}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground font-medium">
-                        Min: {item.minThreshold} {item.unit}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Side: Quantity Displays & Big Touch Buttons */}
-                <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
-                  {/* Current Stock Display */}
-                  <div className="flex flex-col text-left sm:text-right min-w-[80px]">
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold leading-none">
-                      Current Stock
-                    </span>
-                    <span className={cn(
-                      "text-lg font-extrabold mt-1 tracking-tight leading-none flex items-center justify-start sm:justify-end gap-1.5",
-                      isLow ? "text-amber-600 dark:text-amber-400" : "text-foreground"
-                    )}>
-                      {isMutating ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                      ) : (
-                        item.stock
+                  return (
+                     <div
+                      key={item.id}
+                      className={cn(
+                        "flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-all duration-300 gap-4",
+                        isLow 
+                          ? "border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/15 hover:border-amber-500/70 shadow-[0_0_15px_rgba(245,158,11,0.1)] relative overflow-hidden" 
+                          : "border-border/60 bg-card/50 hover:bg-accent/15 hover:border-border/95"
                       )}
-                      <span className="text-xs font-semibold text-muted-foreground">{item.unit}</span>
-                    </span>
-                  </div>
-
-                  {/* Divider */}
-                  <div className="hidden sm:block w-px h-10 sm:h-12 bg-border/50" />
-
-                  {/* Big Touch Action Controls */}
-                  <div className="flex items-center gap-2 sm:gap-3 ml-0 sm:ml-2 flex-wrap">
-                    {/* Reason Select */}
-                    <select
-                      value={reasons[item.id] || ""}
-                      onChange={(e) => setReasons(prev => ({ ...prev, [item.id]: e.target.value }))}
-                      disabled={isMutatingId !== null}
-                      className="h-10 sm:h-12 min-h-[40px] sm:min-h-[48px] rounded-xl border border-border/80 bg-background/50 px-2 sm:px-2.5 text-[11px] sm:text-xs font-bold text-foreground shadow-xs cursor-pointer focus:ring-1 focus:ring-ring focus:outline-hidden disabled:opacity-50"
                     >
-                      <option value="" disabled hidden></option>
-                      <option value="IN">IN (Restock)</option>
-                      <option value="OUT">Used</option>
-                    </select>
+                      {/* Left Side: Image & Info */}
+                      <div 
+                        onClick={() => {
+                          setSelectedItem(item)
+                          setIsDetailOpen(true)
+                        }}
+                        className="flex items-center gap-4 cursor-pointer hover:opacity-85 select-none transition-all flex-1"
+                      >
+                        <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-border/50 bg-muted shrink-0 shadow-xs">
+                          <Image
+                            src={item.image}
+                            alt={item.name}
+                            fill
+                            sizes="56px"
+                            className="object-cover transition-transform duration-500 hover:scale-105"
+                            unoptimized
+                          />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-semibold text-foreground leading-tight tracking-tight flex items-center gap-1.5 hover:text-primary transition-colors">
+                            {item.name}
+                            <Info className="h-3.5 w-3.5 opacity-40 hover:opacity-100 transition-opacity shrink-0" />
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <span className={cn(
+                              "inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-xs",
+                              isLow
+                                ? "bg-amber-500/10 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400"
+                                : "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400"
+                            )}>
+                              {isLow ? "Low Stock" : "In Stock"}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground font-medium">
+                              Min: {item.minThreshold} {item.unit}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
 
-                    <Input
-                      type="number"
-                      min="0"
-                      step={item.unit === "kg" ? "1" : item.unit === "liters" ? "0.1" : "1"}
-                      placeholder="Qty"
-                      value={amounts[item.id] || ""}
-                      onChange={(e) => setAmounts(prev => ({ ...prev, [item.id]: e.target.value }))}
-                      disabled={isMutatingId !== null}
-                      className="h-10 sm:h-12 w-16 sm:w-20 min-h-[40px] sm:min-h-[48px] rounded-xl text-center font-bold"
-                    />
+                      {/* Right Side: Quantity Displays & Big Touch Buttons */}
+                      <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
+                        {/* Current Stock Display */}
+                        <div className="flex flex-col text-left sm:text-right min-w-[80px]">
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold leading-none">
+                            Current Stock
+                          </span>
+                          <span className={cn(
+                            "text-lg font-extrabold mt-1 tracking-tight leading-none flex items-center justify-start sm:justify-end gap-1.5",
+                            isLow ? "text-amber-600 dark:text-amber-400" : "text-foreground"
+                          )}>
+                            {isMutating ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            ) : (
+                              item.stock
+                            )}
+                            <span className="text-xs font-semibold text-muted-foreground">{item.unit}</span>
+                          </span>
+                        </div>
 
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={() => handleUpdate(item.id)}
-                      disabled={isMutatingId !== null || !amounts[item.id] || !reasons[item.id]}
-                      className="size-10 sm:size-12 min-h-[40px] sm:min-h-[48px] rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary border-border/70 hover:border-primary/30 active:scale-95 transition-all flex items-center justify-center shrink-0 disabled:opacity-50"
-                      aria-label={`Update ${item.name}`}
-                    >
-                      <Edit2 className="h-5 w-5" />
-                    </Button>
-                  </div>
-                </div>
+                        {/* Divider */}
+                        <div className="hidden sm:block w-px h-10 sm:h-12 bg-border/50" />
+
+                        {/* Big Touch Action Controls */}
+                        <div className="flex items-center gap-2 sm:gap-3 ml-0 sm:ml-2 flex-wrap">
+                          {/* Reason Select */}
+                          <select
+                            value={reasons[item.id] || ""}
+                            onChange={(e) => setReasons(prev => ({ ...prev, [item.id]: e.target.value }))}
+                            disabled={isMutatingId !== null}
+                            className="h-10 sm:h-12 min-h-[40px] sm:min-h-[48px] rounded-xl border border-border/80 bg-background/50 px-2 sm:px-2.5 text-[11px] sm:text-xs font-bold text-foreground shadow-xs cursor-pointer focus:ring-1 focus:ring-ring focus:outline-hidden disabled:opacity-50"
+                          >
+                            <option value="" disabled hidden></option>
+                            <option value="IN">IN (Restock)</option>
+                            <option value="OUT">Used</option>
+                          </select>
+
+                          <Input
+                            type="number"
+                            min="0"
+                            step={item.unit === "kg" ? "1" : item.unit === "liters" ? "0.1" : "1"}
+                            placeholder="Qty"
+                            value={amounts[item.id] || ""}
+                            onChange={(e) => setAmounts(prev => ({ ...prev, [item.id]: e.target.value }))}
+                            disabled={isMutatingId !== null}
+                            className="h-10 sm:h-12 w-16 sm:w-20 min-h-[40px] sm:min-h-[48px] rounded-xl text-center font-bold"
+                          />
+
+                          <Button
+                            variant="outline"
+                            size="lg"
+                            onClick={() => handleUpdate(item.id)}
+                            disabled={isMutatingId !== null || !amounts[item.id] || !reasons[item.id]}
+                            className="size-10 sm:size-12 min-h-[40px] sm:min-h-[48px] rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary border-border/70 hover:border-primary/30 active:scale-95 transition-all flex items-center justify-center shrink-0 disabled:opacity-50"
+                            aria-label={`Update ${item.name}`}
+                          >
+                            <Edit2 className="h-5 w-5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-            )
-          })
+            </div>
+          ))
         ) : (
           <div className="text-center py-10 border border-dashed border-border/60 rounded-xl bg-card/20">
             <p className="text-muted-foreground text-sm">No items match your search query.</p>
