@@ -173,7 +173,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
   if (profile.department === "Bakery" && (profile.role === "Head Chef" || profile.role === "Kitchen Assistant")) {
     const { data: items } = await supabase
       .from("inventory_items")
-      .select("id, name, unit, current_stock, minimum_threshold, department, unit_price, consumption")
+      .select("id, name, category, unit, current_stock, minimum_threshold, department, unit_price, consumption")
       .eq("department", "Bakery")
       .order("name", { ascending: true })
     if (items) bakeryIngredients = items
@@ -184,7 +184,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
   if (profile.department === "Floral" && (profile.role === "Florist" || profile.role === "Floral Assistant")) {
     const { data: items } = await supabase
       .from("inventory_items")
-      .select("id, name, unit, current_stock, minimum_threshold, department, unit_price, consumption")
+      .select("id, name, category, unit, current_stock, minimum_threshold, department, unit_price, consumption")
       .eq("department", "Floral")
       .order("name", { ascending: true })
     if (items) floralIngredients = items
@@ -194,7 +194,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ depa
     // 1. Fetch items
     let itemsQuery = supabase
       .from("inventory_items")
-      .select("id, name, unit, current_stock, minimum_threshold, department, unit_price, consumption")
+      .select("id, name, category, unit, current_stock, minimum_threshold, department, unit_price, consumption")
       .order("name", { ascending: true })
 
     if (profile.department === "Production") {
